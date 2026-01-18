@@ -19,7 +19,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 
   <style>
-    /* 全站字體一致化：強制使用細體圓字 */
+    /* 全站字體一致化 */
     * { font-family: 'M PLUS Rounded 1c', sans-serif !important; }
     
     body { 
@@ -133,7 +133,7 @@
       signInAnonymously, onAuthStateChanged 
     } = window.fb;
 
-    // --- 圖示元件 (修正回購車圖示) ---
+    // --- 圖示元件 ---
     const Icon = ({ name, size = 24, className = "" }) => {
       const icons = {
         Point: <path d="M6 2L3 6V20A2 2 0 0 0 5 22H19A2 2 0 0 0 21 20V6L18 2H6ZM3 6H21M16 10A4 4 0 0 1 8 10" />,
@@ -191,7 +191,7 @@
       const [submissions, setSubmissions] = useState([]);
       const [rewards, setRewards] = useState([]);
       const [notifications, setNotifications] = useState([]);
-      const [announcement, setAnnouncement] = useState('歡迎光臨應有盡有大超商！今天也要加油喔 🫧');
+      const [announcement, setAnnouncement] = useState('歡迎光臨應有盡有大超商！今天有什麼值得加點數的嗎？🫧');
       const [loading, setLoading] = useState(true);
 
       const [desc, setDesc] = useState('');
@@ -275,7 +275,7 @@
         const inputCodes = Array.from(adminPass).map(c => c.charCodeAt(0));
         if (JSON.stringify(secret) === JSON.stringify(inputCodes)) {
           setIsAdmin(true); setShowAdminLogin(false); setAdminPass(''); setActiveTab('admin');
-        } else { alert('驗證失敗 🐋'); }
+        } else { alert('身分驗證失敗 🐋'); }
       };
 
       const handleUploadTask = async () => {
@@ -438,7 +438,7 @@
                      {submissions.filter(s => s.status === 'redeemed' || s.status === 'verified').length === 0 && <p className="text-center text-[11px] text-slate-300 py-6 bg-white rounded-[25px] border-2 border-dashed border-slate-50 italic">尚未領取兌換券</p>}
                      {submissions.filter(s => s.status === 'redeemed' || s.status === 'verified').map(coupon => (
                        <div key={coupon.id} className={`coupon-card p-4 flex items-center gap-4 shadow-sm ${coupon.status === 'verified' ? 'coupon-used' : ''}`}>
-                         <div className="w-14 h-14 bg-slate-50 rounded-xl overflow-hidden shrink-0 border border-slate-100 relative">
+                         <div className="w-14 h-14 bg-slate-50 rounded-xl overflow-hidden shrink-0 border border-sky-100 relative">
                            {coupon.image && <img src={coupon.image} className="w-full h-full object-cover" />}
                            {coupon.status === 'verified' && <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-bold text-[8px] tracking-tighter">已核銷</div>}
                          </div>
@@ -500,35 +500,35 @@
             {/* 兌換分頁 */}
             {activeTab === 'rewards' && (
               <div className="space-y-6 animate-in">
-                {/* 許願區塊 (優化文字顏色) */}
-                <div className="premium-blue-gradient p-6 rounded-[35px] text-white shadow-xl relative overflow-hidden group border border-white/10">
-                  <Icon name="Sparkles" className="absolute top-2 right-2 text-white/10 group-hover:rotate-12 transition-transform" size={80} />
-                  <h2 className="font-bold text-lg mb-1 flex items-center gap-2">許願池 ✨</h2>
-                  <p className="text-xs text-white mb-5 font-medium drop-shadow-sm">想要什麼新商品嗎？拍下來告訴店長吧！</p>
+                {/* 許願區塊 (改為跟審核區一樣的灰白底) */}
+                <div className="bg-white p-6 rounded-[35px] border border-slate-100 shadow-sm relative overflow-hidden group">
+                  <Icon name="Sparkles" className="absolute top-2 right-2 text-sky-100 group-hover:rotate-12 transition-transform" size={80} />
+                  <h2 className="font-bold text-lg mb-1 flex items-center gap-2 text-slate-800">許願池 ✨</h2>
+                  <p className="text-xs text-slate-500 mb-5 font-medium">想要什麼新商品嗎？拍下來告訴店長吧！</p>
                   
                   {!showWishForm ? (
                     <button 
                       onClick={() => setShowWishForm(true)} 
-                      className="bg-white text-sky-600 px-6 py-3 rounded-2xl text-xs font-bold shadow-lg active:scale-95 transition-all w-full sm:w-auto"
+                      className="btn-action px-6 py-3 text-xs font-bold shadow-md active:scale-95 transition-all w-full sm:w-auto"
                     >
                       我要許願 +
                     </button>
                   ) : (
                     <div className="space-y-4 animate-in slide-in-from-top duration-300">
                       <input 
-                        className="w-full bg-white/20 border-none rounded-xl p-4 text-white text-sm placeholder:text-white/60 focus:ring-2 focus:ring-white/50 outline-none backdrop-blur-sm" 
+                        className="w-full bg-slate-50 border border-slate-100 rounded-xl p-4 text-slate-700 text-sm placeholder:text-slate-300 focus:ring-1 focus:ring-sky-200 outline-none" 
                         placeholder="想換什麼？(例如：咖啡)" 
                         value={wishName} 
                         onChange={(e) => setWishName(e.target.value)} 
                       />
-                      <label className="flex items-center justify-center py-5 rounded-xl bg-white/10 border border-white/20 cursor-pointer hover:bg-white/20 border-dashed transition-all">
-                        <Icon name="Camera" size={20} className="mr-2 text-white/80"/>
-                        <span className="text-xs font-bold text-white/90">{wishImage ? '已成功選取照片' : '上傳參考圖片'}</span>
+                      <label className="flex items-center justify-center py-5 rounded-xl bg-slate-50 border border-slate-100 border-dashed cursor-pointer hover:bg-slate-100 transition-all">
+                        <Icon name="Camera" size={20} className="mr-2 text-slate-400"/>
+                        <span className="text-xs font-bold text-slate-400">{wishImage ? '已選好照片' : '上傳參考圖片'}</span>
                         <input type="file" accept="image/*" className="hidden" onChange={(e) => setWishImage(e.target.files[0])} />
                       </label>
                       <div className="flex gap-2">
-                        <button onClick={() => setShowWishForm(false)} className="flex-1 text-xs font-bold py-3.5 bg-white/10 rounded-xl text-white">取消</button>
-                        <button onClick={handleMakeWish} disabled={isWishing} className="flex-1 text-xs font-bold py-3.5 bg-white text-sky-600 rounded-xl shadow-lg disabled:opacity-50">
+                        <button onClick={() => setShowWishForm(false)} className="flex-1 text-xs font-bold py-3.5 bg-slate-50 text-slate-400 rounded-xl">取消</button>
+                        <button onClick={handleMakeWish} disabled={isWishing} className="flex-1 text-xs font-bold py-3.5 btn-action shadow-lg disabled:opacity-50">
                           {isWishing ? '傳送中...' : '送出願望'}
                         </button>
                       </div>
