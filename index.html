@@ -122,7 +122,7 @@
         text-transform: uppercase;
     }
 
-    /* 轉盤 */
+    /* 轉盤 - 優化文字顯示 */
     .wheel-segment {
         position: absolute; width: 50%; height: 50%;
         top: 0; right: 0; transform-origin: 0% 100%;
@@ -130,8 +130,12 @@
     }
     .wheel-text {
         position: absolute; left: -100%; width: 200%;
-        text-align: center; transform: rotate(30deg) translate(0, -75px);
-        font-size: 11px; font-weight: 700; color: #1e293b;
+        text-align: center; 
+        transform: rotate(30deg) translate(0, -75px);
+        font-size: 11px; /* 加大一點點 */
+        font-weight: 800; /* 加粗 */
+        color: #1e293b;
+        text-shadow: 0 1px 0 rgba(255,255,255,0.5); /* 增加文字白邊，提升可讀性 */
     }
 
     /* 刮刮樂 */
@@ -294,10 +298,10 @@
 
       const defaultWheelSegments = [
         { label: "10 點", value: 10, type: "point", color: "#fef3c7" },
-        { label: "再接再厲", value: 0, type: "text", color: "#e2e8f0" },
+        { label: "咖啡", value: 0, type: "text", color: "#e2e8f0" },
         { label: "5 點", value: 5, type: "point", color: "#dbeafe" },
         { label: "50 點", value: 50, type: "point", color: "#fcd34d" },
-        { label: "銘謝", value: 0, type: "text", color: "#cbd5e1" },
+        { label: "再接再厲", value: 0, type: "text", color: "#cbd5e1" },
         { label: "20 點", value: 20, type: "point", color: "#93c5fd" }
       ];
 
@@ -310,7 +314,7 @@
       const [rpsState, setRpsState] = useState('idle');
       const [rpsUserChoice, setRpsUserChoice] = useState(null);
       const [rpsCpuChoice, setRpsCpuChoice] = useState(null);
-      const [rpsBetAmount, setRpsBetAmount] = useState(10); // RPS Custom Bet Amount
+      const [rpsBetAmount, setRpsBetAmount] = useState(10); 
 
       const [desc, setDesc] = useState('');
       const [selectedFile, setSelectedFile] = useState(null);
@@ -565,7 +569,7 @@
           
           <div className="luxury-bg p-6 pb-10 text-white rounded-b-[45px] shadow-2xl shrink-0 z-10 relative">
             <div className="flex justify-between items-center mb-8">
-              <div className="flex items-center gap-3 pl-2"><div className="w-1.5 h-6 luxury-gold-bg rounded-full"></div><h1 className="text-lg font-bold tracking-widest uppercase font-serif text-white">Point</h1></div>
+              <div className="flex items-center gap-3 pl-2"><div className="w-1.5 h-6 luxury-gold-bg rounded-full"></div><h1 className="text-lg font-bold tracking-widest uppercase font-serif gold-accent">Point</h1></div>
               <div className="flex items-center gap-3">
                 <button onClick={() => setActiveTab('notifs')} className="relative p-2.5 bg-white/10 rounded-xl border border-white/20"><Icon name="Bell" size={18} className="text-white"/>{unreadCount > 0 && <span className="absolute top-1.5 right-1.5 bg-amber-400 w-2 h-2 rounded-full"></span>}</button>
                 <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(!showAdminLogin)} className="p-2.5 bg-white/10 rounded-xl border border-white/20"><Icon name={isAdmin ? "LogOut" : "Lock"} size={18} className="text-white"/></button>
@@ -606,6 +610,9 @@
                       {allCheckinPhotos.slice(0, 9).map(c => (
                          <div key={c.id} className="aspect-square rounded-2xl overflow-hidden relative shadow-md border border-white group">
                             <img src={c.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                            <div className="absolute bottom-0 w-full bg-black/60 text-white text-[9px] font-medium py-1 text-center backdrop-blur-sm">
+                               {c.timestamp ? new Date(c.timestamp.seconds * 1000).toLocaleDateString('zh-TW', {month:'numeric', day:'numeric'}) : ''}
+                            </div>
                          </div>
                       ))}
                   </div>
@@ -669,7 +676,7 @@
                            </div>
                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[24px] border-t-slate-800 z-10"></div>
                         </div>
-                        <button onClick={handleSpinWheel} disabled={wheelSpinning} className="w-full btn-primary py-5 shadow-xl text-xs uppercase font-bold tracking-widest">{wheelSpinning ? '旋轉中...' : `旋轉一次 (${gameSettings.wheelCost} P)`}</button>
+                        <button onClick={handleSpinWheel} disabled={wheelSpinning} className="w-full btn-luxury py-5 shadow-xl text-xs uppercase font-bold tracking-widest">{wheelSpinning ? '旋轉中...' : `旋轉一次 (${gameSettings.wheelCost} P)`}</button>
                      </div>
                   ) : currentActivity === 'rps' ? (
                      <div className="luxury-card p-10 rounded-[40px] text-center animate-in">
