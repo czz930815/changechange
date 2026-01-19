@@ -125,6 +125,7 @@
     @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
     input, textarea, select { font-weight: 400 !important; }
+    button { font-weight: 400 !important; }
     .log-item { border-bottom: 1px solid #f1f5f9; }
     .log-item:last-child { border-bottom: none; }
     
@@ -138,6 +139,7 @@
     }
     .loading-icon { font-size: 40px; margin-bottom: 10px; }
     .loading-text { letter-spacing: 2px; font-size: 13px; color: #64748b; margin-bottom: 10px; font-weight: 500; }
+    .error-detail { font-size: 10px; color: #cbd5e1; max-width: 300px; word-break: break-all; }
     .retry-btn { margin-top: 20px; padding: 10px 24px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; color: #475569; font-size: 14px; font-weight: bold; cursor: pointer; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     
     .settings-input {
@@ -413,7 +415,7 @@
       const [submissions, setSubmissions] = useState([]);
       const [rewards, setRewards] = useState([]);
       const [notifications, setNotifications] = useState([]);
-      const [announcement, setAnnouncement] = useState('Welcome to Point Premium Club.');
+      const [announcement, setAnnouncement] = useState('歡迎光臨 Point Premium 會員俱樂部');
       const [loading, setLoading] = useState(true);
 
       const [desc, setDesc] = useState('');
@@ -528,7 +530,6 @@
         const unsubGameSettings = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'games'), (d) => {
            if(d.exists()) {
               const data = d.data();
-              // Ensure missions array exists
               if(!data.missions) data.missions = defaultMissions;
               const merged = { ...gameSettings, ...data };
               setGameSettings(merged);
@@ -769,14 +770,6 @@
         setTimeout(async () => {
            setWheelSpinning(false);
            const finalDeg = randomDeg % 360; 
-           // Calculate segment index based on 6 segments (60deg each). 
-           // CSS rotates clockwise. 0deg is top. 
-           // Segment 0: 0-60 (Top Right), Seg 1: 60-120...
-           // Actually visually we want to align carefully. 
-           // Let's assume standard distribution for now.
-           // 6 segments array index 0..5
-           // The pointer is at TOP (0 deg). 
-           // If rotation is X, effective angle is (360 - (X % 360)) % 360.
            const effectiveAngle = (360 - (finalDeg % 360)) % 360;
            const segmentIndex = Math.floor(effectiveAngle / 60);
            const segments = gameSettings.wheelSegments || [];
@@ -944,6 +937,10 @@
           return submissions.filter(s => s.status === 'checkin' && s.userId === user?.uid && s.image).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
       }, [submissions, user]);
 
+      const allCheckinPhotos = useMemo(() => {
+          return submissions.filter(s => s.status === 'checkin' && s.image).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+      }, [submissions]);
+
       const unreadCount = user ? notifications.filter(n => !n.readBy?.includes(user.uid)).length : 0;
       const myWishes = useMemo(() => rewards.filter(r => !r.available && (r.userId === user?.uid || !r.userId)), [rewards, user]);
 
@@ -972,7 +969,7 @@
             
             <div className="flex justify-center mb-4">
               <div className="point-display-card px-10 py-4 rounded-2xl flex flex-col items-center gap-1 min-w-[200px]">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Current Balance</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">目前點數</span>
                 <span className="text-5xl font-bold text-white drop-shadow-md font-sans tracking-tight">{points}</span>
               </div>
             </div>
@@ -983,8 +980,8 @@
             
             {showAdminLogin && !isAdmin && (
               <div className="absolute top-24 right-6 bg-white p-6 rounded-2xl shadow-2xl z-50 w-64 text-slate-800 animate-in border border-slate-100">
-                <input type="password" placeholder="Passcode" className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl mb-3 text-sm focus:border-slate-400 outline-none transition-all text-center tracking-widest" value={adminPass} onChange={(e) => setAdminPass(e.target.value)} autoFocus />
-                <button onClick={checkAdmin} className="w-full btn-primary py-3 rounded-xl font-bold text-xs">Verify Access</button>
+                <input type="password" placeholder="管理員密碼" className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl mb-3 text-sm focus:border-slate-400 outline-none transition-all text-center tracking-widest" value={adminPass} onChange={(e) => setAdminPass(e.target.value)} autoFocus />
+                <button onClick={checkAdmin} className="w-full btn-primary py-3 rounded-xl font-bold text-xs">驗證身份</button>
               </div>
             )}
           </div>
@@ -997,15 +994,15 @@
                 {currentActivity === 'scratch_game' && selectedScratchGame ? (
                   // Scratch Game View
                   <div className="luxury-card p-6 rounded-[30px] animate-in">
-                    <button onClick={() => {setCurrentActivity('scratch_list'); setCanScratchNow(false);}} className="mb-4 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> Back</button>
+                    <button onClick={() => {setCurrentActivity('scratch_list'); setCanScratchNow(false);}} className="mb-4 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> 返回</button>
                     <div className="text-center mb-8">
                       <h2 className="font-bold text-slate-800 text-xl mb-1">{selectedScratchGame.title}</h2>
-                      <p className="text-xs text-slate-400 font-medium">Ticket Price: <span className="text-amber-600 font-bold">{selectedScratchGame.cost} P</span></p>
+                      <p className="text-xs text-slate-400 font-medium">入場費：<span className="text-amber-600 font-bold">{selectedScratchGame.cost} P</span></p>
                     </div>
                     {!canScratchNow ? (
                       <div className="text-center py-10">
                         <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-full mx-auto flex items-center justify-center text-slate-300 mb-6 shadow-inner"><Icon name="Lock" size={32}/></div>
-                        <button onClick={() => handlePayToScratch(selectedScratchGame)} className="w-full btn-primary py-4 font-bold shadow-lg">Purchase Ticket</button>
+                        <button onClick={() => handlePayToScratch(selectedScratchGame)} className="w-full btn-primary py-4 font-bold shadow-lg">購買入場券</button>
                       </div>
                     ) : (
                       <div className="grid grid-cols-4 gap-2.5">
@@ -1019,10 +1016,10 @@
                 ) : currentActivity === 'scratch_list' ? (
                   // Scratch List
                   <div className="animate-in">
-                    <button onClick={() => setCurrentActivity(null)} className="mb-4 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> Lobby</button>
-                    <h3 className="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">Scratch Cards</h3>
+                    <button onClick={() => setCurrentActivity(null)} className="mb-4 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> 大廳</button>
+                    <h3 className="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">刮刮樂遊戲</h3>
                     {scratchActivities.length === 0 ? (
-                      <div className="text-center py-12 bg-white rounded-[24px] border border-dashed border-slate-200 text-slate-400 text-xs font-light">No active games available</div>
+                      <div className="text-center py-12 bg-white rounded-[24px] border border-dashed border-slate-200 text-slate-400 text-xs font-light">目前沒有活動</div>
                     ) : (
                       <div className="space-y-3">
                         {scratchActivities.map(game => (
@@ -1032,7 +1029,7 @@
                              </div>
                              <div className="flex-1 min-w-0">
                                <h4 className="font-bold text-slate-700 text-sm truncate">{game.title}</h4>
-                               <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">Prize: {game.prize}</p>
+                               <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">大獎: {game.prize}</p>
                              </div>
                              <div className="bg-slate-50 text-slate-600 border border-slate-100 px-3 py-1.5 rounded-lg text-xs font-bold">{game.cost} P</div>
                           </div>
@@ -1043,8 +1040,8 @@
                 ) : currentActivity === 'wheel' ? (
                    // Wheel View
                    <div className="luxury-card p-6 rounded-[30px] animate-in flex flex-col items-center">
-                     <button onClick={() => setCurrentActivity(null)} className="self-start mb-4 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> Lobby</button>
-                     <h2 className="font-bold text-slate-800 text-xl mb-8 flex items-center gap-2">Lucky Wheel</h2>
+                     <button onClick={() => setCurrentActivity(null)} className="self-start mb-4 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> 大廳</button>
+                     <h2 className="font-bold text-slate-800 text-xl mb-8 flex items-center gap-2">幸運大轉盤</h2>
                      
                      <div className="relative w-64 h-64 mb-10">
                        <div className="w-full h-full rounded-full border-[8px] border-white shadow-2xl overflow-hidden relative transition-transform duration-[3000ms] cubic-bezier(0.2, 0.8, 0.2, 1)" style={{
@@ -1070,54 +1067,54 @@
                      </div>
                      
                      <button onClick={handleSpinWheel} disabled={wheelSpinning} className={`btn-primary w-full py-4 shadow-lg text-sm ${wheelSpinning ? 'opacity-80' : ''}`}>
-                       {wheelSpinning ? 'Spinning...' : `Spin Now (${gameSettings.wheelCost} P)`}
+                       {wheelSpinning ? '轉動中...' : `立即旋轉 (${gameSettings.wheelCost} P)`}
                      </button>
                    </div>
                 ) : currentActivity === 'bank' ? (
                    // Bank View
                    <div className="luxury-card p-6 rounded-[30px] animate-in">
-                      <button onClick={() => setCurrentActivity(null)} className="mb-6 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> Lobby</button>
+                      <button onClick={() => setCurrentActivity(null)} className="mb-6 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> 大廳</button>
                       <div className="luxury-gold-gradient rounded-[24px] p-8 text-white text-center shadow-lg mb-8 relative overflow-hidden">
                          <div className="absolute -right-6 -bottom-6 opacity-20 text-black"><Icon name="PiggyBank" size={120}/></div>
-                         <p className="text-[10px] font-bold text-amber-900/60 uppercase tracking-[0.2em] mb-2">Total Savings</p>
+                         <p className="text-[10px] font-bold text-amber-900/60 uppercase tracking-[0.2em] mb-2">金庫總額</p>
                          <p className="text-5xl font-bold text-amber-900 drop-shadow-sm">{savings.balance || 0}</p>
                          <div className="mt-4 flex justify-center gap-4 text-[10px] font-bold text-amber-900/70">
-                            <span className="bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">Rate: {gameSettings.bankRate * 100}% Daily</span>
-                            <span className="bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">Lock: {gameSettings.bankLockHours}h</span>
+                            <span className="bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">利率: {gameSettings.bankRate * 100}% /日</span>
+                            <span className="bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">閉鎖: {gameSettings.bankLockHours}hr</span>
                          </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 mb-6">
-                         <button onClick={handleDeposit} className="bg-slate-50 text-slate-600 py-4 rounded-xl font-bold text-xs hover:bg-slate-100 border border-slate-200">Deposit</button>
-                         <button onClick={handleWithdraw} className="bg-slate-50 text-slate-600 py-4 rounded-xl font-bold text-xs hover:bg-slate-100 border border-slate-200">Withdraw</button>
+                         <button onClick={handleDeposit} className="bg-slate-50 text-slate-600 py-4 rounded-xl font-bold text-xs hover:bg-slate-100 border border-slate-200">存款</button>
+                         <button onClick={handleWithdraw} className="bg-slate-50 text-slate-600 py-4 rounded-xl font-bold text-xs hover:bg-slate-100 border border-slate-200">提款</button>
                       </div>
 
                       <button onClick={handleCollectInterest} className="w-full py-4 border border-amber-300 text-amber-600 rounded-xl font-bold text-xs hover:bg-amber-50 flex items-center justify-center gap-2 transition-colors">
-                         <Icon name="Sparkles" size={14}/> Collect Interest
+                         <Icon name="Sparkles" size={14}/> 領取利息
                       </button>
                    </div>
                 ) : currentActivity === 'rps' ? (
                    // RPS View
                    <div className="luxury-card p-6 rounded-[30px] animate-in text-center">
-                      <button onClick={() => setCurrentActivity(null)} className="self-start mb-6 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> Lobby</button>
-                      <h2 className="font-bold text-slate-800 text-xl mb-2 flex items-center justify-center gap-2">Rock Paper Scissors</h2>
+                      <button onClick={() => setCurrentActivity(null)} className="self-start mb-6 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> 大廳</button>
+                      <h2 className="font-bold text-slate-800 text-xl mb-2 flex items-center justify-center gap-2">猜拳大對決</h2>
                       
                       <div className="bg-slate-50 p-4 rounded-xl mb-8 border border-slate-100">
                          <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wide">
-                            <span>Cost: {gameSettings.rpsCost} P</span>
-                            <span>Win: {gameSettings.rpsWinMultiplier}x</span>
+                            <span>費用: {gameSettings.rpsCost} P</span>
+                            <span>獲勝: {gameSettings.rpsWinMultiplier}倍</span>
                          </div>
                       </div>
 
                       <div className="flex justify-center items-center gap-10 my-10 h-24">
                          <div className={`text-5xl transition-transform duration-300 ${rpsState === 'playing' ? 'animate-bounce-hand' : ''}`}>
                             {rpsUserChoice === 'rock' ? '✊' : rpsUserChoice === 'paper' ? '🖐️' : rpsUserChoice === 'scissors' ? '✌️' : '❓'}
-                            <p className="text-[9px] text-slate-300 mt-3 font-bold uppercase tracking-widest">You</p>
+                            <p className="text-[9px] text-slate-300 mt-3 font-bold uppercase tracking-widest">你</p>
                          </div>
                          <div className="text-xl font-bold text-slate-200 italic">VS</div>
                          <div className={`text-5xl transition-transform duration-300 ${rpsState === 'playing' ? 'animate-bounce-hand' : ''}`}>
                             {rpsCpuChoice === 'rock' ? '✊' : rpsCpuChoice === 'paper' ? '🖐️' : rpsCpuChoice === 'scissors' ? '✌️' : '❓'}
-                            <p className="text-[9px] text-slate-300 mt-3 font-bold uppercase tracking-widest">Dealer</p>
+                            <p className="text-[9px] text-slate-300 mt-3 font-bold uppercase tracking-widest">店長</p>
                          </div>
                       </div>
 
@@ -1132,8 +1129,8 @@
                 ) : currentActivity === 'missions' ? (
                    // Missions View
                    <div className="luxury-card p-6 rounded-[30px] animate-in">
-                      <button onClick={() => setCurrentActivity(null)} className="mb-6 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> Lobby</button>
-                      <h2 className="font-bold text-slate-800 text-xl mb-6 flex items-center gap-2">Missions Board</h2>
+                      <button onClick={() => setCurrentActivity(null)} className="mb-6 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> 大廳</button>
+                      <h2 className="font-bold text-slate-800 text-xl mb-6 flex items-center gap-2">任務佈告欄</h2>
                       
                       <div className="space-y-4">
                          {gameSettings.missions && gameSettings.missions.map(m => {
@@ -1165,7 +1162,7 @@
                 ) : (
                   // Main Lobby
                   <>
-                    <h2 className="text-lg font-bold text-slate-800 mb-6 px-2 tracking-wide">Activities</h2>
+                    <h2 className="text-lg font-bold text-slate-800 mb-6 px-2 tracking-wide">活動大廳</h2>
                     
                     <div className="luxury-card p-5 rounded-[24px] flex items-center gap-5 mb-8">
                        <label className={`w-16 h-16 rounded-2xl border border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors shrink-0 ${checkInImage ? 'border-amber-400 bg-amber-50 text-amber-600' : 'border-slate-300 text-slate-300 hover:border-slate-400'}`}>
@@ -1173,11 +1170,11 @@
                           <input type="file" accept="image/*" className="hidden" onChange={(e) => setCheckInImage(e.target.files[0])} />
                        </label>
                        <div className="flex-1">
-                          <p className="font-bold text-slate-800 text-sm">Daily Check-in</p>
-                          <p className="text-[10px] text-slate-400 mt-1">Upload nail photo to earn {gameSettings.checkInPoints} P</p>
+                          <p className="font-bold text-slate-800 text-sm">每日打卡</p>
+                          <p className="text-[10px] text-slate-400 mt-1">上傳指甲照片可獲得 {gameSettings.checkInPoints} P</p>
                        </div>
                        <button onClick={handleCheckIn} disabled={isCheckingIn} className={`px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all ${!checkInImage ? 'bg-slate-100 text-slate-400' : 'bg-slate-800 text-white hover:bg-slate-900'}`}>
-                         Submit
+                         打卡
                        </button>
                     </div>
 
@@ -1186,8 +1183,8 @@
                           <div className="absolute -right-4 -top-4 w-20 h-20 bg-slate-50 rounded-full group-hover:scale-110 transition-transform"></div>
                           <Icon name="Ticket" size={24} className="text-slate-700 relative z-10"/>
                           <div className="relative z-10">
-                             <p className="font-bold text-slate-700 text-sm">Scratch</p>
-                             <p className="text-[10px] text-slate-400 mt-0.5">Try your luck</p>
+                             <p className="font-bold text-slate-700 text-sm">刮刮樂</p>
+                             <p className="text-[10px] text-slate-400 mt-0.5">試試手氣</p>
                           </div>
                        </div>
 
@@ -1195,8 +1192,8 @@
                           <div className="absolute -right-4 -top-4 w-20 h-20 bg-indigo-50 rounded-full group-hover:scale-110 transition-transform"></div>
                           <Icon name="Disc" size={24} className="text-indigo-600 relative z-10"/>
                           <div className="relative z-10">
-                             <p className="font-bold text-slate-700 text-sm">Lucky Wheel</p>
-                             <p className="text-[10px] text-slate-400 mt-0.5">Big prizes</p>
+                             <p className="font-bold text-slate-700 text-sm">幸運轉盤</p>
+                             <p className="text-[10px] text-slate-400 mt-0.5">贏取倍率獎金</p>
                           </div>
                        </div>
 
@@ -1204,8 +1201,8 @@
                           <div className="absolute -right-4 -top-4 w-20 h-20 bg-pink-50 rounded-full group-hover:scale-110 transition-transform"></div>
                           <Icon name="Hand" size={24} className="text-pink-500 relative z-10"/>
                           <div className="relative z-10">
-                             <p className="font-bold text-slate-700 text-sm">RPS Battle</p>
-                             <p className="text-[10px] text-slate-400 mt-0.5">Double or nothing</p>
+                             <p className="font-bold text-slate-700 text-sm">猜拳對決</p>
+                             <p className="text-[10px] text-slate-400 mt-0.5">以小博大</p>
                           </div>
                        </div>
 
@@ -1213,16 +1210,16 @@
                           <div className="absolute -right-4 -top-4 w-20 h-20 bg-emerald-50 rounded-full group-hover:scale-110 transition-transform"></div>
                           <Icon name="PiggyBank" size={24} className="text-emerald-600 relative z-10"/>
                           <div className="relative z-10">
-                             <p className="font-bold text-slate-700 text-sm">Vault</p>
-                             <p className="text-[10px] text-slate-400 mt-0.5">Earn interest</p>
+                             <p className="font-bold text-slate-700 text-sm">小金庫</p>
+                             <p className="text-[10px] text-slate-400 mt-0.5">存點生利息</p>
                           </div>
                        </div>
                     </div>
 
                     <div onClick={() => setCurrentActivity('missions')} className="mt-6 luxury-gold-gradient p-6 rounded-[24px] shadow-lg text-white flex items-center justify-between cursor-pointer hover:shadow-xl transition-all relative overflow-hidden group">
                        <div className="relative z-10">
-                          <p className="font-bold text-amber-900 text-sm flex items-center gap-2"><Icon name="Target" size={16}/> Missions</p>
-                          <p className="text-[10px] text-amber-900/70 mt-1 font-medium">Complete goals for rewards</p>
+                          <p className="font-bold text-amber-900 text-sm flex items-center gap-2"><Icon name="Target" size={16}/> 任務佈告欄</p>
+                          <p className="text-[10px] text-amber-900/70 mt-1 font-medium">達成目標即可領取獎勵</p>
                        </div>
                        <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm group-hover:translate-x-1 transition-transform">
                           <Icon name="ArrowLeft" size={16} className="rotate-180 text-amber-900"/>
@@ -1237,20 +1234,20 @@
             {activeTab === 'home' && (
               <div className="space-y-8 animate-in">
                 <div className="luxury-card p-6 rounded-[30px]">
-                  <h3 className="font-bold text-slate-800 mb-4 flex gap-2 items-center"><Icon name="Plus" size={18} className="text-slate-400"/> Earn Points</h3>
-                  <textarea className="w-full bg-slate-50 border border-slate-200 p-4 rounded-[16px] text-sm min-h-[100px] outline-none focus:border-slate-400 transition-all text-slate-600 placeholder:text-slate-300" placeholder="Describe your activity..." value={desc} onChange={(e) => setDesc(e.target.value)} />
+                  <h3 className="font-bold text-slate-800 mb-4 flex gap-2 items-center"><Icon name="Plus" size={18} className="text-slate-400"/> 賺取點數</h3>
+                  <textarea className="w-full bg-slate-50 border border-slate-200 p-4 rounded-[16px] text-sm min-h-[100px] outline-none focus:border-slate-400 transition-all text-slate-600 placeholder:text-slate-300" placeholder="今天有什麼值得加點的呢..." value={desc} onChange={(e) => setDesc(e.target.value)} />
                   <div className="flex gap-4 mt-6">
                     <label className={`flex-[1.5] cursor-pointer py-4 rounded-xl flex items-center justify-center border border-dashed transition-all ${selectedFile ? 'border-amber-400 bg-amber-50 text-amber-600' : 'border-slate-300 text-slate-300 hover:border-slate-400'}`}>
-                      <Icon name="Image" size={16} className="mr-2"/> <span className="text-xs font-bold">{selectedFile ? 'Selected' : 'Photo'}</span>
+                      <Icon name="Image" size={16} className="mr-2"/> <span className="text-xs font-bold">{selectedFile ? '已選擇' : '上傳證明'}</span>
                       <input type="file" accept="image/*" className="hidden" onChange={(e) => setSelectedFile(e.target.files[0])} />
                     </label>
-                    <button onClick={handleUploadTask} disabled={isUploading} className="flex-1 btn-primary py-4 rounded-xl font-bold text-xs shadow-md">Submit</button>
+                    <button onClick={handleUploadTask} disabled={isUploading} className="flex-1 btn-primary py-4 rounded-xl font-bold text-xs shadow-md">送出申請</button>
                   </div>
                 </div>
 
                 {myCheckinPhotos.length > 0 && (
                   <div>
-                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-4 flex items-center gap-2"><Icon name="Image" size={14}/> Check-in Gallery</h3>
+                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-4 flex items-center gap-2"><Icon name="Image" size={14}/> 我的打卡相簿</h3>
                      <div className="grid grid-cols-3 gap-3">
                         {myCheckinPhotos.map(c => (
                            <div key={c.id} className="aspect-square rounded-xl overflow-hidden relative shadow-sm group">
@@ -1268,9 +1265,9 @@
                 )}
 
                 <div className="space-y-4">
-                   <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2"><Icon name="Ticket" size={14}/> My Coupons</h3>
+                   <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2"><Icon name="Ticket" size={14}/> 我的兌換券</h3>
                    <div className="flex flex-col gap-3">
-                     {submissions.filter(s => s.status === 'redeemed' || s.status === 'verified').length === 0 && <p className="text-center text-[11px] text-slate-300 py-8 bg-white rounded-[24px] border border-dashed border-slate-200 font-light">No coupons yet</p>}
+                     {submissions.filter(s => s.status === 'redeemed' || s.status === 'verified').length === 0 && <p className="text-center text-[11px] text-slate-300 py-8 bg-white rounded-[24px] border border-dashed border-slate-200 font-light">目前沒有兌換券</p>}
                      {submissions.filter(s => s.status === 'redeemed' || s.status === 'verified').map(coupon => (
                        <div key={coupon.id} className={`coupon-card p-4 flex items-center gap-4 ${coupon.status === 'verified' ? 'coupon-used' : ''}`}>
                          <div className="w-12 h-12 bg-slate-50 rounded-xl overflow-hidden shrink-0 border border-slate-100">
@@ -1278,7 +1275,7 @@
                          </div>
                          <div className="flex-1 min-w-0">
                            <p className="text-sm font-bold text-slate-700 truncate">{coupon.description.replace('🎁 已兌換：', '').replace('🎁 刮刮樂中獎：', '')}</p>
-                           <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wide">{coupon.status === 'verified' ? 'Redeemed' : 'Valid'}</p>
+                           <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wide">{coupon.status === 'verified' ? '已核銷' : '可使用'}</p>
                          </div>
                          <button onClick={() => deleteItem('submissions', coupon.id, 'Record')} className="text-slate-300 hover:text-red-400 transition-colors p-2"><Icon name="Trash2" size={16}/></button>
                        </div>
@@ -1287,21 +1284,21 @@
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2"><Icon name="History" size={14}/> History</h3>
+                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2"><Icon name="History" size={14}/> 歷史紀錄</h3>
                   <div className="luxury-card rounded-[24px] overflow-hidden">
-                    {submissions.length === 0 ? <p className="text-center text-[11px] text-slate-300 py-8 font-light">No records found</p> : (
+                    {submissions.length === 0 ? <p className="text-center text-[11px] text-slate-300 py-8 font-light">無紀錄</p> : (
                       <div className="flex flex-col">
                         {submissions.filter(s => ['pending', 'approved', 'deducted', 'redeemed', 'scratch', 'checkin', 'bonus', 'rejected'].includes(s.status)).map(item => (
                           <div key={item.id} className="p-4 flex justify-between items-center border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
                             <div className="flex flex-col min-w-0 pr-4">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{item.timestamp ? new Date(item.timestamp.seconds * 1000).toLocaleDateString() : 'Just now'}</span>
+                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{item.timestamp ? new Date(item.timestamp.seconds * 1000).toLocaleDateString() : '剛剛'}</span>
                               <div className="text-xs font-medium text-slate-600 truncate">
-                                {item.description.replace('🎁 已兌換：', 'Redeem: ').replace('⚠️ 扣點：', 'Penalty: ').replace('🎲 參加', 'Game: ').replace('🎁 刮刮樂中獎：', 'Win: ').replace('🎁 系統補給：', 'Bonus: ')}
-                                {item.status === 'rejected' && <span className="text-red-400 block text-[9px] mt-1">Reason: {item.rejectionReason}</span>}
+                                {item.description.replace('🎁 已兌換：', '兌換: ').replace('⚠️ 扣點：', '扣點: ').replace('🎲 參加', '活動: ').replace('🎁 刮刮樂中獎：', '中獎: ').replace('🎁 系統補給：', '補給: ')}
+                                {item.status === 'rejected' && <span className="text-red-400 block text-[9px] mt-1">原因: {item.rejectionReason}</span>}
                               </div>
                             </div>
                             <div className={`text-xs font-bold shrink-0 ${item.status === 'rejected' ? 'text-slate-300' : item.status === 'pending' ? 'text-amber-400' : (item.awardedPoints > 0 ? 'text-emerald-500' : 'text-red-400')}`}>
-                              {item.status === 'rejected' ? 'Rejected' : item.status === 'pending' ? 'Pending' : (item.awardedPoints > 0 ? `+${item.awardedPoints}` : item.awardedPoints)}
+                              {item.status === 'rejected' ? '拒絕' : item.status === 'pending' ? '審核中' : (item.awardedPoints > 0 ? `+${item.awardedPoints}` : item.awardedPoints)}
                             </div>
                           </div>
                         ))}
@@ -1316,30 +1313,30 @@
             {activeTab === 'rewards' && (
               <div className="space-y-8 animate-in">
                 <div className="luxury-card p-6 rounded-[30px]">
-                  <h3 className="font-bold text-slate-800 mb-4 flex gap-2 items-center"><Icon name="Sparkles" size={18} className="text-slate-400"/> Wishlist</h3>
-                  <p className="text-xs text-slate-400 mb-4 font-light">Request items for the shop manager to add.</p>
+                  <h3 className="font-bold text-slate-800 mb-4 flex gap-2 items-center"><Icon name="Sparkles" size={18} className="text-slate-400"/> 許願池</h3>
+                  <p className="text-xs text-slate-400 mb-4 font-light">想要什麼？許願讓店長上架！</p>
                   <div className="space-y-4">
-                     <input className="settings-input" placeholder="I wish for..." value={wishName} onChange={(e) => setWishName(e.target.value)} />
+                     <input className="settings-input" placeholder="我想要..." value={wishName} onChange={(e) => setWishName(e.target.value)} />
                      <div className="flex gap-3">
                          <label className={`flex-1 cursor-pointer py-3 rounded-xl flex items-center justify-center border border-dashed transition-all ${wishImage ? 'border-amber-400 bg-amber-50 text-amber-600' : 'border-slate-300 text-slate-300 hover:border-slate-400'}`}>
-                            <Icon name="Image" size={16} className="mr-2"/> <span className="text-xs font-bold">{wishImage ? 'Ready' : 'Image'}</span>
+                            <Icon name="Image" size={16} className="mr-2"/> <span className="text-xs font-bold">{wishImage ? '已選圖' : '附圖'}</span>
                             <input type="file" accept="image/*" className="hidden" onChange={(e) => setWishImage(e.target.files[0])} />
                          </label>
-                         <button onClick={handleMakeWish} disabled={isWishing} className="flex-[2] btn-primary rounded-xl font-bold text-xs shadow-md">{isWishing ? 'Sending...' : 'Make Wish'}</button>
+                         <button onClick={handleMakeWish} disabled={isWishing} className="flex-[2] btn-primary rounded-xl font-bold text-xs shadow-md">{isWishing ? '許願中...' : '送出願望'}</button>
                      </div>
                   </div>
                 </div>
 
                 {myWishes.length > 0 && (
                   <div className="mb-2">
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-3 flex items-center gap-2"><Icon name="Sparkles" size={14}/> Pending Wishes</h3>
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-3 flex items-center gap-2"><Icon name="Sparkles" size={14}/> 審核中的願望</h3>
                     <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
                       {myWishes.map(wish => (
                         <div key={wish.id} className="min-w-[100px] w-[100px] flex-shrink-0 group">
                            <div className="w-full h-24 rounded-2xl bg-white overflow-hidden mb-2 relative border border-slate-100 shadow-sm">
                               {wish.image && <img src={wish.image} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />}
                               <div className="absolute inset-0 flex items-center justify-center bg-black/5">
-                                 <span className="text-[9px] bg-white/90 text-slate-600 px-2 py-1 rounded-full shadow-sm font-bold">Pending</span>
+                                 <span className="text-[9px] bg-white/90 text-slate-600 px-2 py-1 rounded-full shadow-sm font-bold">審核中</span>
                               </div>
                            </div>
                            <p className="text-xs font-bold text-slate-600 truncate text-center">{wish.name}</p>
@@ -1350,7 +1347,7 @@
                 )}
 
                 <div>
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-4 flex items-center gap-2"><Icon name="Store" size={14}/> Shop</h3>
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-4 flex items-center gap-2"><Icon name="Store" size={14}/> 兌換商店</h3>
                     <div className="grid grid-cols-2 gap-4">
                         {rewards.filter(r => r.available).map(item => (
                             <div key={item.id} className="luxury-card p-3 rounded-[24px] flex flex-col relative group hover:-translate-y-1 transition-transform duration-300">
@@ -1361,7 +1358,7 @@
                                     </div>
                                 </div>
                                 <h4 className="font-bold text-slate-700 text-sm mb-2 truncate px-1">{item.name}</h4>
-                                <button onClick={() => handleRedeem(item)} className="mt-auto w-full py-2.5 bg-slate-100 text-slate-500 hover:bg-slate-800 hover:text-white transition-all rounded-xl text-xs font-bold">Redeem</button>
+                                <button onClick={() => handleRedeem(item)} className="mt-auto w-full py-2.5 bg-slate-100 text-slate-500 hover:bg-slate-800 hover:text-white transition-all rounded-xl text-xs font-bold">立即兌換</button>
                                 {isAdmin && (
                                     <div onClick={(e) => { e.stopPropagation(); deleteItem('rewards', item.id, item.name); }} className="delete-badge hover:bg-red-500 transition-colors"><Icon name="Trash2" size={12}/></div>
                                 )}
@@ -1370,7 +1367,7 @@
                     </div>
                     {rewards.filter(r => r.available).length === 0 && (
                         <div className="text-center py-16 text-slate-300 text-xs font-light bg-white rounded-[30px] border border-dashed border-slate-200">
-                           The shop is currently empty.
+                           目前架上沒有商品
                         </div>
                     )}
                 </div>
@@ -1380,9 +1377,9 @@
             {/* Notifications Tab */}
             {activeTab === 'notifs' && (
                 <div className="space-y-4 animate-in">
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-2">Notifications</h3>
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-2">通知中心</h3>
                     {notifications.length === 0 ? (
-                        <div className="text-center py-20 text-slate-300 text-xs font-light">No new notifications</div>
+                        <div className="text-center py-20 text-slate-300 text-xs font-light">暫無新通知</div>
                     ) : (
                         notifications.map(n => (
                             <div key={n.id} className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm">
@@ -1403,51 +1400,70 @@
                 {/* Stats */}
                 <div className="luxury-gradient p-6 rounded-[30px] text-white shadow-lg relative overflow-hidden">
                   <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12"><Icon name="Chart" size={120}/></div>
-                  <h2 className="text-sm font-bold flex gap-2 items-center mb-6 text-slate-200"><Icon name="Chart" size={18}/> Dashboard</h2>
+                  <h2 className="text-sm font-bold flex gap-2 items-center mb-6 text-slate-200"><Icon name="Chart" size={18}/> 營運儀表板</h2>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
-                      <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mb-1">Issued</p>
+                      <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mb-1">已發放</p>
                       <p className="text-2xl font-bold">{stats.totalIssued}</p>
                     </div>
                     <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
-                      <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mb-1">Redeemed</p>
+                      <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mb-1">已回收</p>
                       <p className="text-2xl font-bold">{stats.totalRedeemed}</p>
                     </div>
                   </div>
-                  <button onClick={updateAnnounce} className="w-full mt-4 bg-white/10 py-3 rounded-xl text-[10px] font-bold hover:bg-white/20 transition-colors">Edit Marquee</button>
+                  <button onClick={updateAnnounce} className="w-full mt-4 bg-white/10 py-3 rounded-xl text-[10px] font-bold hover:bg-white/20 transition-colors">修改跑馬燈公告</button>
                 </div>
 
                 {!adminMonitoringGame && (
                   <>
                   {/* Pending Actions */}
                   <div className="space-y-4">
-                    <h3 className="text-[9px] font-bold text-slate-400 px-3 uppercase tracking-[0.2em] flex items-center gap-2"><Icon name="Alert" size={14} className="text-amber-500"/> Pending Approvals</h3>
-                    {submissions.filter(s => s.status === 'pending').length === 0 ? <p className="text-center text-[10px] text-slate-300 py-4 font-light bg-white rounded-xl border border-dashed border-slate-200">No pending items</p> : 
+                    <h3 className="text-[9px] font-bold text-slate-400 px-3 uppercase tracking-[0.2em] flex items-center gap-2"><Icon name="Alert" size={14} className="text-amber-500"/> 待審核項目</h3>
+                    {submissions.filter(s => s.status === 'pending').length === 0 ? <p className="text-center text-[10px] text-slate-300 py-4 font-light bg-white rounded-xl border border-dashed border-slate-200">目前沒有待審核項目</p> : 
                       submissions.filter(s => s.status === 'pending').map(sub => (
                       <div key={sub.id} className="bg-white p-6 rounded-[30px] border border-amber-100 shadow-sm border-l-4 border-l-amber-300">
                         {sub.image && <div className="w-full h-48 mb-5 overflow-hidden rounded-[20px] bg-slate-50 border border-slate-100 shadow-inner"><img src={sub.image} className="w-full h-full object-cover" /></div>}
                         <p className="text-sm font-bold text-slate-700 mb-6 text-center italic">"{sub.description}"</p>
                         <div className="flex flex-col gap-3 mb-4">
                            <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                              <span className="text-xs font-bold text-slate-400 shrink-0">Points:</span>
+                              <span className="text-xs font-bold text-slate-400 shrink-0">發放:</span>
                               <input type="number" className="w-full bg-transparent border-none text-sm font-bold text-slate-700 outline-none" placeholder="10" value={approvalPoints[sub.id] || ''} onChange={(e) => setApprovalPoints({ ...approvalPoints, [sub.id]: e.target.value })} />
                            </div>
                            <div className="flex items-center gap-4 bg-red-50 p-3 rounded-xl border border-red-100">
-                              <span className="text-xs font-bold text-red-300 shrink-0">Reason:</span>
-                              <input className="w-full bg-transparent border-none text-sm font-medium text-red-500 placeholder-red-200 outline-none" placeholder="Reject reason" value={rejectionReasons[sub.id] || ''} onChange={(e) => setRejectionReasons({ ...rejectionReasons, [sub.id]: e.target.value })} />
+                              <span className="text-xs font-bold text-red-300 shrink-0">原因:</span>
+                              <input className="w-full bg-transparent border-none text-sm font-medium text-red-500 placeholder-red-200 outline-none" placeholder="拒絕原因" value={rejectionReasons[sub.id] || ''} onChange={(e) => setRejectionReasons({ ...rejectionReasons, [sub.id]: e.target.value })} />
                            </div>
                         </div>
                         <div className="flex gap-3">
-                          <button onClick={() => handleReject(sub)} className="flex-1 py-3 bg-red-50 text-red-500 hover:bg-red-100 rounded-[14px] text-[10px] font-bold transition-colors">Reject</button>
-                          <button onClick={() => handleApprove(sub, approvalPoints[sub.id] || 10)} className="flex-[2.5] btn-primary py-3 rounded-[14px] text-[10px] font-bold tracking-widest shadow-lg">Approve</button>
+                          <button onClick={() => handleReject(sub)} className="flex-1 py-3 bg-red-50 text-red-500 hover:bg-red-100 rounded-[14px] text-[10px] font-bold transition-colors">拒絕</button>
+                          <button onClick={() => handleApprove(sub, approvalPoints[sub.id] || 10)} className="flex-[2.5] btn-primary py-3 rounded-[14px] text-[10px] font-bold tracking-widest shadow-lg">核准</button>
                         </div>
                       </div>
                     ))}
                   </div>
 
+                  {/* Member Check-in Gallery */}
                   <div className="space-y-4">
-                    <h3 className="text-[9px] font-bold text-slate-400 px-3 uppercase tracking-[0.2em] flex items-center gap-2"><Icon name="Ticket" size={14} className="text-emerald-500"/> Verification</h3>
-                    {submissions.filter(s => s.status === 'redeemed').length === 0 ? <p className="text-center text-[10px] text-slate-300 py-4 font-light bg-white rounded-xl border border-dashed border-slate-200">No redemptions pending</p> :
+                     <h3 className="text-[9px] font-bold text-slate-400 px-3 uppercase tracking-[0.2em] flex items-center gap-2"><Icon name="Image" size={14} className="text-rose-400"/> 會員打卡牆 (監控)</h3>
+                     {allCheckinPhotos.length === 0 ? <p className="text-center text-[10px] text-slate-300 py-4 font-light bg-white rounded-xl border border-dashed border-slate-200">尚無打卡照片</p> : 
+                     <div className="grid grid-cols-3 gap-3">
+                        {allCheckinPhotos.map(c => (
+                           <div key={c.id} className="aspect-square rounded-xl overflow-hidden relative shadow-sm group border border-slate-200">
+                              <img src={c.image} className="w-full h-full object-cover" />
+                              <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md" onClick={(e) => { e.stopPropagation(); deleteItem('submissions', c.id, '這張照片'); }}>
+                                 <Icon name="Trash2" size={12}/>
+                              </div>
+                              <div className="absolute bottom-0 w-full bg-black/50 text-white text-[8px] text-center py-1 backdrop-blur-sm truncate px-1">
+                                 {c.timestamp ? new Date(c.timestamp.seconds * 1000).toLocaleDateString() : ''}
+                              </div>
+                           </div>
+                        ))}
+                     </div>}
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-[9px] font-bold text-slate-400 px-3 uppercase tracking-[0.2em] flex items-center gap-2"><Icon name="Ticket" size={14} className="text-emerald-500"/> 待核銷票券</h3>
+                    {submissions.filter(s => s.status === 'redeemed').length === 0 ? <p className="text-center text-[10px] text-slate-300 py-4 font-light bg-white rounded-xl border border-dashed border-slate-200">沒有待核銷項目</p> :
                     <div className="bg-white rounded-[30px] border border-slate-100 p-4 space-y-3 shadow-sm">
                       {submissions.filter(s => s.status === 'redeemed').map(coupon => (
                           <div key={coupon.id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-2xl border border-slate-100">
@@ -1455,7 +1471,7 @@
                              <div className="flex-1 min-w-0">
                                <p className="text-xs font-bold text-slate-600 truncate">{coupon.description.replace('🎁 已兌換：', '')}</p>
                              </div>
-                             <button onClick={() => handleVerifyCoupon(coupon.id)} className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-bold active:scale-95 flex items-center gap-1 shadow-sm hover:bg-emerald-600"><Icon name="Check" size={12}/> Verify</button>
+                             <button onClick={() => handleVerifyCoupon(coupon.id)} className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-bold active:scale-95 flex items-center gap-1 shadow-sm hover:bg-emerald-600"><Icon name="Check" size={12}/> 核銷</button>
                           </div>
                       ))}
                     </div>}
@@ -1464,38 +1480,38 @@
                   {/* Game Config */}
                   <div className="luxury-card p-6 rounded-[30px] relative overflow-hidden">
                      <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none"><Icon name="Dice" size={100}/></div>
-                     <h3 className="font-bold text-slate-700 mb-6 flex gap-2 items-center text-sm"><Icon name="Dice" size={18}/> Game Settings</h3>
+                     <h3 className="font-bold text-slate-700 mb-6 flex gap-2 items-center text-sm"><Icon name="Dice" size={18}/> 遊戲參數設定</h3>
                      
                      <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div><label className="settings-label">Check-in Pts</label><input type="number" className="settings-input" value={pendingSettings?.checkInPoints} onChange={(e) => setPendingSettings({...pendingSettings, checkInPoints: parseInt(e.target.value)})} /></div>
-                        <div><label className="settings-label">Bank Rate (0.05)</label><input type="number" step="0.01" className="settings-input" value={pendingSettings?.bankRate} onChange={(e) => setPendingSettings({...pendingSettings, bankRate: parseFloat(e.target.value)})} /></div>
-                        <div><label className="settings-label">Lock Hours</label><input type="number" className="settings-input" value={pendingSettings?.bankLockHours} onChange={(e) => setPendingSettings({...pendingSettings, bankLockHours: parseInt(e.target.value)})} /></div>
-                        <div><label className="settings-label">RPS Cost</label><input type="number" className="settings-input" value={pendingSettings?.rpsCost} onChange={(e) => setPendingSettings({...pendingSettings, rpsCost: parseInt(e.target.value)})} /></div>
-                        <div><label className="settings-label">RPS Multiplier</label><input type="number" className="settings-input" value={pendingSettings?.rpsWinMultiplier} onChange={(e) => setPendingSettings({...pendingSettings, rpsWinMultiplier: parseInt(e.target.value)})} /></div>
-                        <div><label className="settings-label">Wheel Cost</label><input type="number" className="settings-input" value={pendingSettings?.wheelCost} onChange={(e) => setPendingSettings({...pendingSettings, wheelCost: parseInt(e.target.value)})} /></div>
+                        <div><label className="settings-label">打卡獎勵 (點)</label><input type="number" className="settings-input" value={pendingSettings?.checkInPoints} onChange={(e) => setPendingSettings({...pendingSettings, checkInPoints: parseInt(e.target.value)})} /></div>
+                        <div><label className="settings-label">金庫利率 (0.05)</label><input type="number" step="0.01" className="settings-input" value={pendingSettings?.bankRate} onChange={(e) => setPendingSettings({...pendingSettings, bankRate: parseFloat(e.target.value)})} /></div>
+                        <div><label className="settings-label">金庫閉鎖 (小時)</label><input type="number" className="settings-input" value={pendingSettings?.bankLockHours} onChange={(e) => setPendingSettings({...pendingSettings, bankLockHours: parseInt(e.target.value)})} /></div>
+                        <div><label className="settings-label">猜拳花費 (點)</label><input type="number" className="settings-input" value={pendingSettings?.rpsCost} onChange={(e) => setPendingSettings({...pendingSettings, rpsCost: parseInt(e.target.value)})} /></div>
+                        <div><label className="settings-label">猜拳倍率 (倍)</label><input type="number" className="settings-input" value={pendingSettings?.rpsWinMultiplier} onChange={(e) => setPendingSettings({...pendingSettings, rpsWinMultiplier: parseInt(e.target.value)})} /></div>
+                        <div><label className="settings-label">轉盤花費 (點)</label><input type="number" className="settings-input" value={pendingSettings?.wheelCost} onChange={(e) => setPendingSettings({...pendingSettings, wheelCost: parseInt(e.target.value)})} /></div>
                      </div>
 
                      <div className="border-t border-slate-100 pt-6 mb-6">
-                        <h4 className="text-xs font-bold text-slate-600 mb-4">🎡 Wheel Segments (6 Items)</h4>
+                        <h4 className="text-xs font-bold text-slate-600 mb-4">🎡 轉盤獎項 (6項)</h4>
                         <div className="grid grid-cols-2 gap-3">
                            {pendingSettings?.wheelSegments?.map((seg, i) => (
                               <div key={i} className="flex gap-2">
-                                 <input className="settings-input flex-[2]" value={seg.label} onChange={(e) => updateWheelSegment(i, 'label', e.target.value)} placeholder="Label" />
-                                 <input type="number" className="settings-input flex-1" value={seg.value} onChange={(e) => updateWheelSegment(i, 'value', parseInt(e.target.value))} placeholder="Pts" />
+                                 <input className="settings-input flex-[2]" value={seg.label} onChange={(e) => updateWheelSegment(i, 'label', e.target.value)} placeholder="名稱" />
+                                 <input type="number" className="settings-input flex-1" value={seg.value} onChange={(e) => updateWheelSegment(i, 'value', parseInt(e.target.value))} placeholder="點數" />
                               </div>
                            ))}
                         </div>
                      </div>
 
                      <div className="border-t border-slate-100 pt-6 mb-6">
-                        <h4 className="text-xs font-bold text-slate-600 mb-4">🎯 Missions Config</h4>
+                        <h4 className="text-xs font-bold text-slate-600 mb-4">🎯 任務設定</h4>
                         <div className="space-y-2 mb-4">
                            {pendingSettings?.missions?.map((m, i) => (
                               <div key={i} className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
                                  <div className="flex-1 min-w-0 grid grid-cols-3 gap-2">
                                     <div className="col-span-3 text-[10px] font-bold text-slate-500 truncate">{m.title}</div>
-                                    <div className="text-[9px] text-slate-400">Target: {m.target}</div>
-                                    <div className="text-[9px] text-slate-400">Reward: {m.reward}</div>
+                                    <div className="text-[9px] text-slate-400">目標: {m.target}</div>
+                                    <div className="text-[9px] text-slate-400">獎勵: {m.reward}</div>
                                     <div className="text-[9px] text-slate-400 uppercase">{m.type}</div>
                                  </div>
                                  <button onClick={() => removeMission(i)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Icon name="Trash2" size={14}/></button>
@@ -1503,39 +1519,39 @@
                            ))}
                         </div>
                         <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                           <p className="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-wide">Add New Mission</p>
-                           <input className="settings-input mb-2" placeholder="Title (e.g. 7 Day Streak)" value={newMissionTitle} onChange={e => setNewMissionTitle(e.target.value)} />
+                           <p className="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-wide">新增任務</p>
+                           <input className="settings-input mb-2" placeholder="標題 (例: 連續打卡7天)" value={newMissionTitle} onChange={e => setNewMissionTitle(e.target.value)} />
                            <div className="grid grid-cols-3 gap-2 mb-2">
-                              <input type="number" className="settings-input" placeholder="Target" value={newMissionTarget} onChange={e => setNewMissionTarget(e.target.value)} />
-                              <input type="number" className="settings-input" placeholder="Reward" value={newMissionReward} onChange={e => setNewMissionReward(e.target.value)} />
+                              <input type="number" className="settings-input" placeholder="目標值" value={newMissionTarget} onChange={e => setNewMissionTarget(e.target.value)} />
+                              <input type="number" className="settings-input" placeholder="獎勵點數" value={newMissionReward} onChange={e => setNewMissionReward(e.target.value)} />
                               <select className="settings-input" value={newMissionType} onChange={e => setNewMissionType(e.target.value)}>
-                                 <option value="streak">Streak</option>
-                                 <option value="total">Total Pts</option>
+                                 <option value="streak">連續天數</option>
+                                 <option value="total">累計點數</option>
                               </select>
                            </div>
-                           <button onClick={addMission} className="w-full py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-900">Add Mission</button>
+                           <button onClick={addMission} className="w-full py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-900">加入任務</button>
                         </div>
                      </div>
 
-                     <button onClick={handleSaveGameSettings} className="w-full py-4 btn-primary font-bold text-xs shadow-lg flex items-center justify-center gap-2"><Icon name="Save" size={16}/> Save All Settings</button>
+                     <button onClick={handleSaveGameSettings} className="w-full py-4 btn-primary font-bold text-xs shadow-lg flex items-center justify-center gap-2"><Icon name="Save" size={16}/> 儲存設定</button>
                   </div>
 
                   <div className="luxury-card p-6 rounded-[30px]">
-                      <h3 className="font-bold text-emerald-600 mb-4 flex gap-2 items-center text-sm"><Icon name="Gift" size={18}/> Manual Bonus</h3>
+                      <h3 className="font-bold text-emerald-600 mb-4 flex gap-2 items-center text-sm"><Icon name="Gift" size={18}/> 手動發送點數</h3>
                       <div className="space-y-4">
-                        <input className="settings-input" placeholder="Reason" value={givePointsReason} onChange={(e) => setGivePointsReason(e.target.value)} />
-                        <input type="number" className="settings-input" placeholder="Points Amount" value={givePointsAmount} onChange={(e) => setGivePointsAmount(e.target.value)} />
-                        <button onClick={handleGivePoints} className="w-full py-4 bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-md hover:bg-emerald-600">Send Points</button>
+                        <input className="settings-input" placeholder="原因" value={givePointsReason} onChange={(e) => setGivePointsReason(e.target.value)} />
+                        <input type="number" className="settings-input" placeholder="點數數量" value={givePointsAmount} onChange={(e) => setGivePointsAmount(e.target.value)} />
+                        <button onClick={handleGivePoints} className="w-full py-4 bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-md hover:bg-emerald-600">發送</button>
                       </div>
                   </div>
 
                   <div className="luxury-card p-6 rounded-[30px]">
-                      <h3 className="font-bold text-sky-600 mb-4 flex gap-2 items-center text-sm"><Icon name="Store" size={18}/> Add Product</h3>
+                      <h3 className="font-bold text-sky-600 mb-4 flex gap-2 items-center text-sm"><Icon name="Store" size={18}/> 上架商品</h3>
                       <div className="space-y-4">
-                        <input className="settings-input" placeholder="Product Name" value={adminRewardName} onChange={(e) => setAdminRewardName(e.target.value)} />
-                        <input type="number" className="settings-input" placeholder="Cost (Points)" value={adminRewardCost} onChange={(e) => setAdminRewardCost(e.target.value)} />
+                        <input className="settings-input" placeholder="商品名稱" value={adminRewardName} onChange={(e) => setAdminRewardName(e.target.value)} />
+                        <input type="number" className="settings-input" placeholder="花費點數" value={adminRewardCost} onChange={(e) => setAdminRewardCost(e.target.value)} />
                         <input type="file" accept="image/*" className="text-[10px] block w-full text-slate-400" onChange={(e) => setAdminRewardImage(e.target.files[0])} />
-                        <button onClick={handleAddRewardByAdmin} className="w-full py-4 bg-sky-500 text-white rounded-xl font-bold text-xs shadow-md hover:bg-sky-600">Add to Shop</button>
+                        <button onClick={handleAddRewardByAdmin} className="w-full py-4 bg-sky-500 text-white rounded-xl font-bold text-xs shadow-md hover:bg-sky-600">上架</button>
                       </div>
                   </div>
                   </>
@@ -1548,24 +1564,24 @@
           {/* Bottom Nav */}
           <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 px-8 py-4 flex justify-between items-center text-[9px] font-bold text-slate-300 max-w-md mx-auto z-50 sm:rounded-b-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
             <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${activeTab === 'home' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}>
-              <Icon name="Camera" size={22} className={activeTab === 'home' ? 'fill-current text-slate-800' : ''}/><span>Home</span>
+              <Icon name="Camera" size={22} className={activeTab === 'home' ? 'fill-current text-slate-800' : ''}/><span>首頁</span>
             </button>
             <button onClick={() => setActiveTab('activities')} className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${activeTab === 'activities' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}>
-              <Icon name="Dice" size={22} className={activeTab === 'activities' ? 'fill-current text-slate-800' : ''}/><span>Play</span>
+              <Icon name="Dice" size={22} className={activeTab === 'activities' ? 'fill-current text-slate-800' : ''}/><span>活動</span>
             </button>
             <button onClick={() => setActiveTab('rewards')} className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${activeTab === 'rewards' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}>
-              <Icon name="Gift" size={22} className={activeTab === 'rewards' ? 'fill-current text-slate-800' : ''}/><span>Shop</span>
+              <Icon name="Gift" size={22} className={activeTab === 'rewards' ? 'fill-current text-slate-800' : ''}/><span>兌換</span>
             </button>
             <button onClick={() => setActiveTab('notifs')} className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${activeTab === 'notifs' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}>
               <div className="relative">
                 <Icon name="Bell" size={22} className={activeTab === 'notifs' ? 'fill-current text-slate-800' : ''}/>
                 {unreadCount > 0 && <span className="absolute -top-0.5 -right-0.5 bg-amber-500 w-2.5 h-2.5 rounded-full border border-white"></span>}
               </div>
-              <span>Alerts</span>
+              <span>通知</span>
             </button>
             {isAdmin && (
               <button onClick={() => setActiveTab('admin')} className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${activeTab === 'admin' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}>
-                <Icon name={isAdmin ? "LogOut" : "Lock"} size={22} className={activeTab === 'admin' ? 'fill-current text-slate-800' : ''}/><span>Admin</span>
+                <Icon name={isAdmin ? "LogOut" : "Lock"} size={22} className={activeTab === 'admin' ? 'fill-current text-slate-800' : ''}/><span>管理</span>
               </button>
             )}
           </div>
