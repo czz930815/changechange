@@ -13,7 +13,7 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
   <style>
-    /* 全域設定 */
+    /* 全域字體設定 - 保持纖細高級感 */
     * { 
       font-family: 'Noto Sans TC', sans-serif !important; 
       box-sizing: border-box;
@@ -21,7 +21,7 @@
     
     body { 
       background-color: #f8fafc; 
-      color: #172554; /* 統一使用深藍色文字 */
+      color: #172554; 
       -webkit-tap-highlight-color: transparent; 
       overflow-x: hidden;
       overscroll-behavior-y: none;
@@ -42,20 +42,17 @@
     .marquee span { display: inline-block; padding-left: 100%; animation: marquee 25s linear infinite; }
     @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-    /* --- 高級配色系統 (午夜藍 + 鎏金) --- */
+    /* --- 高級配色系統 --- */
     
-    /* 1. 深色背景 (Header) */
     .luxury-bg { 
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
     }
     
-    /* 2. 金色背景 (Highlights) */
     .luxury-gold-bg { 
-        background: linear-gradient(135deg, #ca8a04 0%, #eab308 100%); /* 更深沉穩重的金 */
+        background: linear-gradient(135deg, #ca8a04 0%, #eab308 100%); 
         color: white;
     }
     
-    /* 3. 卡片樣式 */
     .luxury-card { 
       background: #ffffff; 
       border: 1px solid #e2e8f0; 
@@ -63,7 +60,6 @@
       border-radius: 24px;
     }
     
-    /* Header 專用的小型點數卡 */
     .header-point-card { 
       background: rgba(255, 255, 255, 0.1); 
       backdrop-filter: blur(10px); 
@@ -72,14 +68,14 @@
       border-radius: 16px;
     }
 
-    /* 4. 文字顏色 (統一高對比) */
-    .text-deep-blue { color: #172554; } /* 主標題 */
-    .text-luxury-gold { color: #b45309; } /* 強調色 */
+    /* 文字顏色 */
+    .text-deep-blue { color: #172554; } 
+    .text-luxury-gold { color: #b45309; } 
     .text-label { color: #64748b; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
     
-    /* 5. 按鈕樣式 */
+    /* 按鈕樣式 */
     .btn-primary {
-      background: #172554; /* 深藍 */
+      background: #172554; 
       color: white;
       font-weight: 500;
       border-radius: 12px;
@@ -103,19 +99,28 @@
       box-shadow: 0 4px 10px rgba(180, 83, 9, 0.3);
     }
 
-    /* 6. 輸入框 */
+    /* 輸入框 - 縮小字體以符合後台需求 */
     .settings-input {
         background: #f8fafc;
         border: 1px solid #cbd5e1;
         border-radius: 10px;
-        padding: 10px 12px;
-        font-size: 14px;
+        padding: 8px 10px; /* 稍微縮小內距 */
+        font-size: 12px;   /* 縮小字體 */
         width: 100%;
         outline: none;
-        color: #1e293b; /* 深色字 */
+        color: #1e293b; 
         font-weight: 500;
     }
     .settings-input:focus { border-color: #172554; background: white; }
+    
+    .settings-label {
+        font-size: 10px; /* 縮小標籤字體 */
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 4px;
+        display: block;
+        text-transform: uppercase;
+    }
 
     /* 轉盤 */
     .wheel-segment {
@@ -149,7 +154,7 @@
     /* Delete Badge */
     .delete-badge {
         position: absolute; top: -8px; right: -8px; 
-        background: #ef4444; color: white; width: 24px; height: 24px; 
+        background: #ef4444; color: white; width: 20px; height: 20px; 
         border-radius: 50%; display: flex; align-items: center; justify-content: center;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; z-index: 20;
     }
@@ -305,6 +310,7 @@
       const [rpsState, setRpsState] = useState('idle');
       const [rpsUserChoice, setRpsUserChoice] = useState(null);
       const [rpsCpuChoice, setRpsCpuChoice] = useState(null);
+      const [rpsBetAmount, setRpsBetAmount] = useState(10); // RPS Custom Bet Amount
 
       const [desc, setDesc] = useState('');
       const [selectedFile, setSelectedFile] = useState(null);
@@ -415,25 +421,36 @@
       };
 
       const handlePlayRPS = async (choice) => {
-          const cost = gameSettings.rpsCost || 10;
-          if(points < cost || rpsState === 'playing') return;
-          setRpsState('playing'); setRpsUserChoice(choice);
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-cost), totalRedeemed: increment(cost) });
+          const bet = parseInt(rpsBetAmount);
+          if (isNaN(bet) || bet < 2) return alert("最低下注點數為 2 點");
+          if (points < bet) return alert(`點數不足！您只有 ${points} 點`);
+          if (rpsState === 'playing') return;
+
+          setRpsState('playing'); 
+          setRpsUserChoice(choice);
+          
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-bet), totalRedeemed: increment(bet) });
+          
           setTimeout(async () => {
               const cpu = ['rock', 'paper', 'scissors'][Math.floor(Math.random() * 3)];
               setRpsCpuChoice(cpu);
               let res = 'draw';
               if((choice === 'rock' && cpu === 'scissors') || (choice === 'paper' && cpu === 'rock') || (choice === 'scissors' && cpu === 'paper')) res = 'win';
               else if (choice !== cpu) res = 'lose';
+              
               if(res === 'win') {
-                  const winPts = cost * gameSettings.rpsWinMultiplier;
-                  await addDoc(getPublicRef('submissions'), { description: "✊ 猜拳獲勝獎勵", status: 'bonus', awardedPoints: winPts, timestamp: serverTimestamp(), userId: user.uid });
+                  const winPts = Math.floor(bet * gameSettings.rpsWinMultiplier);
+                  await addDoc(getPublicRef('submissions'), { description: `✊ 猜拳獲勝 (下注 ${bet})`, status: 'bonus', awardedPoints: winPts, timestamp: serverTimestamp(), userId: user.uid });
                   await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(winPts), totalIssued: increment(winPts) });
                   alert(`獲勝！贏得 ${winPts} 點`);
               } else if (res === 'draw') {
-                  await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(cost), totalIssued: increment(cost) });
-                  alert("平手！退費");
-              } else alert("輸了...下次再來");
+                  await addDoc(getPublicRef('submissions'), { description: `✊ 猜拳平手 (退費 ${bet})`, status: 'bonus', awardedPoints: bet, timestamp: serverTimestamp(), userId: user.uid });
+                  await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(bet), totalIssued: increment(bet) });
+                  alert("平手！點數退還");
+              } else {
+                 await addDoc(getPublicRef('submissions'), { description: `✊ 猜拳戰敗 (損失 ${bet})`, status: 'scratch', awardedPoints: -bet, timestamp: serverTimestamp(), userId: user.uid });
+                 alert("輸了...下次再來");
+              }
               setRpsState('idle');
           }, 1500);
       };
@@ -516,29 +533,12 @@
       const missionProg = useMemo(() => {
           const mySubs = submissions.filter(s => s.userId === user?.uid);
           const totalEarned = mySubs.reduce((acc, curr) => acc + (curr.awardedPoints > 0 ? curr.awardedPoints : 0), 0);
-          // Calculate Streak
           const checkins = [...new Set(mySubs.filter(s => s.status === 'checkin').map(s => new Date(s.timestamp?.seconds*1000).toDateString()))];
-          checkins.sort((a,b) => new Date(b) - new Date(a));
-          let streak = 0;
-          if (checkins.length > 0) {
-              const today = new Date().toDateString();
-              const yesterday = new Date(Date.now() - 86400000).toDateString();
-              if (checkins[0] === today || checkins[0] === yesterday) {
-                  streak = 1;
-                  let currentDate = new Date(checkins[0]);
-                  for (let i = 1; i < checkins.length; i++) {
-                      const prevDate = new Date(currentDate); prevDate.setDate(prevDate.getDate() - 1);
-                      if (checkins[i] === prevDate.toDateString()) { streak++; currentDate = prevDate; } else break;
-                  }
-              }
-          }
-          // Get claimed missions
-          const claimedIds = new Set(mySubs.filter(s => s.status === 'mission_reward').map(s => s.missionId));
-          return { streak, total: totalEarned, claimed: claimedIds };
+          return { streak: checkins.length, total: totalEarned };
       }, [submissions, user]);
 
       const handleClaimMission = async (m) => {
-         if(missionProg.claimed.has(m.id)) return;
+         if(missionProg.claimed && missionProg.claimed.has(m.id)) return;
          try {
              await addDoc(getPublicRef('submissions'), { 
                  description: `🎯 達成任務：${m.title}`, 
@@ -565,15 +565,15 @@
           
           <div className="luxury-bg p-6 pb-10 text-white rounded-b-[45px] shadow-2xl shrink-0 z-10 relative">
             <div className="flex justify-between items-center mb-8">
-              <div className="flex items-center gap-3 pl-2"><div className="w-1.5 h-6 luxury-gold-gradient rounded-full"></div><h1 className="text-lg font-bold tracking-widest uppercase font-serif gold-accent">Point</h1></div>
+              <div className="flex items-center gap-3 pl-2"><div className="w-1.5 h-6 luxury-gold-bg rounded-full"></div><h1 className="text-lg font-bold tracking-widest uppercase font-serif text-white">Point</h1></div>
               <div className="flex items-center gap-3">
-                <button onClick={() => setActiveTab('notifs')} className="relative p-2.5 bg-white/5 rounded-xl border border-white/10"><Icon name="Bell" size={18} className="text-slate-300"/>{unreadCount > 0 && <span className="absolute top-1.5 right-1.5 bg-amber-500 w-2 h-2 rounded-full"></span>}</button>
-                <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(!showAdminLogin)} className="p-2.5 bg-white/5 rounded-xl border border-white/10"><Icon name={isAdmin ? "LogOut" : "Lock"} size={18} className="text-slate-300"/></button>
+                <button onClick={() => setActiveTab('notifs')} className="relative p-2.5 bg-white/10 rounded-xl border border-white/20"><Icon name="Bell" size={18} className="text-white"/>{unreadCount > 0 && <span className="absolute top-1.5 right-1.5 bg-amber-400 w-2 h-2 rounded-full"></span>}</button>
+                <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(!showAdminLogin)} className="p-2.5 bg-white/10 rounded-xl border border-white/20"><Icon name={isAdmin ? "LogOut" : "Lock"} size={18} className="text-white"/></button>
               </div>
             </div>
-            <div className="flex justify-center mb-6"><div className="point-card px-6 py-2 rounded-2xl flex flex-col items-center min-w-[150px]"><span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">目前點數</span><span className="text-3xl font-bold text-white tracking-tight drop-shadow-lg">{points}</span></div></div>
-            <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 marquee mx-2 backdrop-blur-md"><span className="text-[11px] font-light text-slate-300 uppercase tracking-wide">{announcement}</span></div>
-            {showAdminLogin && !isAdmin && <div className="absolute top-24 right-6 bg-white p-6 rounded-2xl shadow-2xl z-50 w-64 text-slate-800 border animate-in"><input type="password" placeholder="管理員密碼" className="w-full bg-slate-50 border p-3 rounded-xl mb-3 text-center tracking-widest outline-none text-sm" value={adminPass} onChange={e => setAdminPass(e.target.value)} autoFocus /><button onClick={checkAdmin} className="w-full btn-luxury py-3 rounded-xl font-bold text-xs uppercase tracking-widest">驗證身份</button></div>}
+            <div className="flex justify-center mb-6"><div className="header-point-card px-10 py-3 rounded-2xl flex flex-col items-center min-w-[150px]"><span className="text-[10px] text-white/70 uppercase tracking-widest font-bold mb-1">目前點數</span><span className="text-4xl font-bold text-white tracking-tight drop-shadow-lg">{points}</span></div></div>
+            <div className="bg-white/10 border border-white/20 rounded-xl px-4 py-2 marquee mx-2 backdrop-blur-md"><span className="text-[11px] font-light text-white uppercase tracking-wide">{announcement}</span></div>
+            {showAdminLogin && !isAdmin && <div className="absolute top-24 right-6 bg-white p-6 rounded-2xl shadow-2xl z-50 w-64 text-slate-800 border animate-in"><input type="password" placeholder="管理員密碼" className="w-full bg-slate-50 border p-3 rounded-xl mb-3 text-center tracking-widest outline-none text-sm" value={adminPass} onChange={e => setAdminPass(e.target.value)} autoFocus /><button onClick={checkAdmin} className="w-full btn-primary py-3 rounded-xl font-bold text-xs uppercase tracking-widest">驗證身份</button></div>}
           </div>
 
           <div className="p-6 flex-1 overflow-y-auto no-scrollbar space-y-10">
@@ -583,21 +583,21 @@
                   <h3 className="font-bold text-deep-blue flex items-center gap-2"><Icon name="Plus" size={18}/> 賺取點數回報</h3>
                   <textarea className="w-full bg-slate-50 border border-slate-100 p-5 rounded-2xl text-sm min-h-[110px] outline-none" placeholder="記錄今天的努力..." value={desc} onChange={e => setDesc(e.target.value)} />
                   <div className="flex gap-3">
-                    <label className={`flex-1 cursor-pointer py-4 rounded-xl flex items-center justify-center border border-dashed transition-all ${selectedFile ? 'border-amber-400 bg-amber-50 text-amber-600' : 'text-slate-400 border-slate-200'}`}>
+                    <label className={`flex-1 cursor-pointer py-4 rounded-xl flex items-center justify-center border border-dashed transition-all ${selectedFile ? 'border-amber-500 bg-amber-50 text-amber-700' : 'text-slate-400 border-slate-200'}`}>
                       <Icon name="Image" size={18} className="mr-2"/> <span className="font-bold text-xs">{selectedFile ? '已就緒' : '附圖'}</span>
                       <input type="file" accept="image/*" className="hidden" onChange={e => setSelectedFile(e.target.files[0])} />
                     </label>
-                    <button onClick={handleUploadTask} className="flex-1 btn-luxury py-4 rounded-xl font-bold text-xs uppercase tracking-widest">送出</button>
+                    <button onClick={handleUploadTask} className="flex-1 btn-primary py-4 rounded-xl font-bold text-xs uppercase tracking-widest">送出</button>
                   </div>
                 </div>
 
                 <div className="luxury-card p-6 rounded-[30px] flex items-center gap-5">
-                    <label className={`w-16 h-16 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center shrink-0 transition-colors ${checkInImage ? 'border-amber-400 bg-amber-50 text-amber-600' : 'border-slate-200 text-slate-300'}`}>
+                    <label className={`w-16 h-16 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center shrink-0 transition-colors ${checkInImage ? 'border-amber-500 bg-amber-50 text-amber-700' : 'border-slate-200 text-slate-300'}`}>
                        <Icon name="Camera" size={24}/>
                        <input type="file" accept="image/*" className="hidden" onChange={e => setCheckInImage(e.target.files[0])} />
                     </label>
                     <div className="flex-1"><p className="font-bold text-sm text-deep-blue">指甲保護</p><p className="text-[10px] text-label">上傳美照領 {gameSettings.checkInPoints} P</p></div>
-                    <button onClick={handleCheckIn} className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm ${!checkInImage ? 'bg-slate-50 text-slate-300' : 'btn-luxury'}`}>打卡</button>
+                    <button onClick={handleCheckIn} className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm ${!checkInImage ? 'bg-slate-50 text-slate-300' : 'btn-primary'}`}>打卡</button>
                 </div>
 
                 <div className="space-y-4">
@@ -620,7 +620,7 @@
                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mb-1">{item.timestamp ? new Date(item.timestamp.seconds * 1000).toLocaleDateString() : '剛剛'}</span>
                              <div className="text-xs font-bold text-deep-blue truncate">{item.description}</div>
                           </div>
-                          <div className={`text-xs font-bold ${item.status==='rejected' ? 'text-slate-300' : item.status==='pending' ? 'text-amber-500' : (item.awardedPoints > 0 ? 'text-emerald-500' : 'text-rose-500')}`}>
+                          <div className={`text-xs font-bold ${item.status==='rejected' ? 'text-slate-300' : item.status==='pending' ? 'text-amber-500' : (item.awardedPoints > 0 ? 'text-emerald-600' : 'text-rose-500')}`}>
                              {item.status==='rejected' ? '駁回' : item.status==='pending' ? '審核中' : (item.awardedPoints > 0 ? `+${item.awardedPoints}` : item.awardedPoints)}
                           </div>
                        </div>
@@ -646,12 +646,12 @@
                         </div>
                         <div onClick={() => setCurrentActivity('bank')} className="luxury-card p-6 h-28 flex items-center justify-between border-slate-100 hover:-translate-y-1 transition-all group cursor-pointer relative overflow-hidden">
                            <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-emerald-50 rounded-full group-hover:scale-110 transition-transform z-0"></div>
-                           <div className="relative z-10 flex items-center gap-4"><Icon name="PiggyBank" size={32} className="text-emerald-400"/><div className="text-left"><p className="text-sm font-bold text-deep-blue uppercase tracking-widest">點數小金庫</p><p className="text-[10px] text-label">存點生利息</p></div></div>
+                           <div className="relative z-10 flex items-center gap-4"><Icon name="PiggyBank" size={32} className="text-emerald-500"/><div className="text-left"><p className="text-sm font-bold text-deep-blue uppercase tracking-widest">點數小金庫</p><p className="text-[10px] text-label">存點生利息</p></div></div>
                            <Icon name="ArrowLeft" size={16} className="rotate-180 text-slate-300"/>
                         </div>
                         <div onClick={() => setCurrentActivity('missions')} className="luxury-card p-6 h-28 flex items-center justify-between border-slate-100 hover:-translate-y-1 transition-all group cursor-pointer relative overflow-hidden">
                            <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-amber-50 rounded-full group-hover:scale-110 transition-transform z-0"></div>
-                           <div className="relative z-10 flex items-center gap-4"><Icon name="Target" size={32} className="text-amber-400"/><div className="text-left"><p className="text-sm font-bold text-deep-blue uppercase tracking-widest">任務佈告欄</p><p className="text-[10px] text-label">達成目標領取獎勵</p></div></div>
+                           <div className="relative z-10 flex items-center gap-4"><Icon name="Target" size={32} className="text-amber-500"/><div className="text-left"><p className="text-sm font-bold text-deep-blue uppercase tracking-widest">任務佈告欄</p><p className="text-[10px] text-label">達成目標領取獎勵</p></div></div>
                            <Icon name="ArrowLeft" size={16} className="rotate-180 text-slate-300"/>
                         </div>
                         <div onClick={() => setCurrentActivity('scratch_list')} className="luxury-card p-6 h-28 flex items-center justify-between border-slate-100 hover:-translate-y-1 transition-all group cursor-pointer relative overflow-hidden">
@@ -669,54 +669,64 @@
                            </div>
                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[24px] border-t-slate-800 z-10"></div>
                         </div>
-                        <button onClick={handleSpinWheel} disabled={wheelSpinning} className="w-full btn-luxury py-5 shadow-xl text-xs uppercase font-bold tracking-widest">{wheelSpinning ? '旋轉中...' : `旋轉一次 (${gameSettings.wheelCost} P)`}</button>
+                        <button onClick={handleSpinWheel} disabled={wheelSpinning} className="w-full btn-primary py-5 shadow-xl text-xs uppercase font-bold tracking-widest">{wheelSpinning ? '旋轉中...' : `旋轉一次 (${gameSettings.wheelCost} P)`}</button>
                      </div>
                   ) : currentActivity === 'rps' ? (
                      <div className="luxury-card p-10 rounded-[40px] text-center animate-in">
                         <button onClick={() => setCurrentActivity(null)} className="self-start mb-6 text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-3 py-1.5 rounded-full">← 返回</button>
-                        <h2 className="font-bold text-deep-blue text-lg mb-12 tracking-widest">猜拳大對決</h2>
+                        <h2 className="font-bold text-deep-blue text-lg mb-2 tracking-widest">猜拳大對決</h2>
+                        <div className="bg-slate-50 p-4 rounded-xl mb-8 border border-slate-100 flex flex-col gap-2">
+                           <div className="flex justify-between text-[10px] text-label tracking-wide">
+                              <span>下注金額 (最少2點)</span>
+                              <span>獲勝: {gameSettings.rpsWinMultiplier}倍</span>
+                           </div>
+                           <input type="number" className="settings-input text-center text-lg font-bold" value={rpsBetAmount} onChange={e => setRpsBetAmount(Math.max(2, parseInt(e.target.value)))} />
+                        </div>
+
                         <div className="flex justify-around items-center mb-12">
                            <div className={rpsState==='playing'?'animate-bounce-hand':''}>
                               <div className="text-5xl mb-4">{rpsUserChoice==='rock'?'✊':rpsUserChoice==='paper'?'🖐️':rpsUserChoice==='scissors'?'✌️':'❓'}</div>
                               <p className="text-[10px] text-label">玩家</p>
                            </div>
-                           <div className="text-slate-200 text-xl italic font-serif">vs</div>
+                           <div className="text-slate-300 text-xl italic font-serif">vs</div>
                            <div className={rpsState==='playing'?'animate-bounce-hand':''}>
                               <div className="text-5xl mb-4">{rpsCpuChoice==='rock'?'✊':rpsCpuChoice==='paper'?'🖐️':rpsCpuChoice==='scissors'?'✌️':'❓'}</div>
                               <p className="text-[10px] text-label">店長</p>
                            </div>
                         </div>
                         <div className="grid grid-cols-3 gap-4">
-                           <button onClick={() => handlePlayRPS('rock')} className="bg-white border-slate-100 border p-5 rounded-2xl shadow-sm text-3xl">✊</button>
-                           <button onClick={() => handlePlayRPS('paper')} className="bg-white border-slate-100 border p-5 rounded-2xl shadow-sm text-3xl">🖐️</button>
-                           <button onClick={() => handlePlayRPS('scissors')} className="bg-white border-slate-100 border p-5 rounded-2xl shadow-sm text-3xl">✌️</button>
+                           <button onClick={() => handlePlayRPS('rock')} className="bg-white border-slate-200 border p-4 rounded-2xl shadow-sm hover:shadow-md text-3xl">✊</button>
+                           <button onClick={() => handlePlayRPS('paper')} className="bg-white border-slate-200 border p-4 rounded-2xl shadow-sm hover:shadow-md text-3xl">🖐️</button>
+                           <button onClick={() => handlePlayRPS('scissors')} className="bg-white border-slate-200 border p-4 rounded-2xl shadow-sm hover:shadow-md text-3xl">✌️</button>
                         </div>
-                        <p className="mt-8 text-[10px] text-slate-400 font-bold uppercase">獲勝可得 {gameSettings.rpsWinMultiplier} 倍點數獎勵</p>
                      </div>
                   ) : currentActivity === 'bank' ? (
                      <div className="luxury-card p-8 rounded-[40px] space-y-8 animate-in">
                         <button onClick={() => setCurrentActivity(null)} className="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-3 py-1.5 rounded-full">← 返回</button>
                         <div className="luxury-gold-bg p-10 rounded-[30px] text-center shadow-xl relative overflow-hidden">
-                           <p className="text-[10px] font-bold opacity-70 uppercase mb-3 text-white">小金庫餘額</p>
+                           <p className="text-[10px] font-bold text-white/80 uppercase mb-3">小金庫餘額</p>
                            <p className="text-5xl font-bold text-white drop-shadow-sm">{savings.balance || 0}</p>
-                           <p className="mt-5 text-[9px] font-bold text-white bg-white/20 inline-block px-3 py-1 rounded-full backdrop-blur-md">日利率: {gameSettings.bankRate * 100}%</p>
+                           <div className="mt-5 flex justify-center gap-2">
+                             <p className="text-[9px] font-bold text-white bg-white/20 inline-block px-3 py-1 rounded-full backdrop-blur-md">利率: {gameSettings.bankRate * 100}%</p>
+                             <p className="text-[9px] font-bold text-white bg-white/20 inline-block px-3 py-1 rounded-full backdrop-blur-md">閉鎖: {gameSettings.bankLockHours}hr</p>
+                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                           <button onClick={handleDeposit} className="bg-slate-50 border py-4 rounded-xl font-bold text-xs uppercase hover:bg-slate-100">存入</button>
-                           <button onClick={handleWithdraw} className="bg-slate-50 border py-4 rounded-xl font-bold text-xs uppercase hover:bg-slate-100">提領</button>
+                           <button onClick={handleDeposit} className="bg-slate-50 border py-4 rounded-xl font-bold text-xs uppercase hover:bg-slate-100 text-deep-blue">存入</button>
+                           <button onClick={handleWithdraw} className="bg-slate-50 border py-4 rounded-xl font-bold text-xs uppercase hover:bg-slate-100 text-deep-blue">提領</button>
                         </div>
-                        <button onClick={handleCollectInterest} className="w-full py-5 border-2 border-amber-300 text-amber-600 rounded-2xl font-bold text-xs uppercase hover:bg-amber-50">領取每日利息</button>
+                        <button onClick={handleCollectInterest} className="w-full py-5 border-2 border-amber-400 text-amber-700 rounded-2xl font-bold text-xs uppercase hover:bg-amber-50">領取每日利息</button>
                         
                         <div className="border-t border-slate-100 pt-6">
                            <p className="text-label mb-4 px-2">交易明細</p>
                            <div className="space-y-3 h-40 overflow-y-auto no-scrollbar">
                               {bankTransactions.length === 0 ? <p className="text-center text-xs text-slate-300 py-4 font-light">無交易紀錄</p> : bankTransactions.map(t => (
-                                 <div key={t.id} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl">
+                                 <div key={t.id} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
                                     <div className="flex flex-col">
                                        <span className="text-[9px] text-slate-400 font-bold">{t.timestamp ? new Date(t.timestamp.seconds * 1000).toLocaleDateString() : ''}</span>
                                        <span className="text-xs font-bold text-deep-blue">{t.description}</span>
                                     </div>
-                                    <span className={`text-xs font-bold ${t.awardedPoints > 0 ? 'text-emerald-500' : 'text-slate-400'}`}>{t.awardedPoints > 0 ? `+${t.awardedPoints}` : t.awardedPoints}</span>
+                                    <span className={`text-xs font-bold ${t.awardedPoints > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>{t.awardedPoints > 0 ? `+${t.awardedPoints}` : t.awardedPoints}</span>
                                  </div>
                               ))}
                            </div>
@@ -730,7 +740,7 @@
                            {gameSettings.missions && gameSettings.missions.map(m => {
                               let prog = m.type === 'streak' ? missionProg.streak : missionProg.total;
                               let pct = Math.min(prog / m.target * 100, 100);
-                              let isClaimed = missionProg.claimed.has(m.id);
+                              let isClaimed = missionProg.claimed && missionProg.claimed.has(m.id);
                               return (
                                  <div key={m.id} className="bg-slate-50 p-5 rounded-[25px] border border-slate-100 space-y-4">
                                     <div className="flex justify-between items-center"><span className="text-xs font-bold text-deep-blue">{m.title}</span><span className="text-[10px] font-bold text-luxury-gold">+{m.reward}P</span></div>
@@ -739,9 +749,9 @@
                                        <span className="text-label">進度: {prog} / {m.target}</span>
                                        {pct >= 100 ? (
                                            isClaimed ? 
-                                           <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-3 py-1 rounded-full">已領取</span> : 
+                                           <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">已領取</span> : 
                                            <button onClick={() => handleClaimMission(m)} className="btn-gold px-3 py-1 rounded-full text-[10px] shadow-md">領取獎勵</button>
-                                       ) : <span className="text-[10px] text-slate-300">進行中</span>}
+                                       ) : <span className="text-[10px] text-slate-400">進行中</span>}
                                     </div>
                                  </div>
                               );
@@ -782,7 +792,7 @@
               <div className="space-y-8 animate-in">
                 <div className="luxury-card p-6 rounded-[30px] space-y-4">
                   <h3 className="font-bold text-deep-blue">夢想許願池</h3>
-                  <input className="settings-input" placeholder="想要什麼獎勵..." value={wishName} onChange={e => setWishName(e.target.value)} />
+                  <input className="settings-input text-[11px]" placeholder="想要什麼獎勵..." value={wishName} onChange={e => setWishName(e.target.value)} />
                   <button onClick={handleMakeWish} className="w-full btn-luxury py-4 rounded-xl font-bold text-xs uppercase tracking-widest">送出夢想</button>
                 </div>
                 
@@ -852,7 +862,7 @@
                               <p className="text-xs font-medium italic">"{sub.description}"</p>
                               <div className="flex gap-3">
                                  <input type="number" className="settings-input flex-1 font-bold" placeholder="10" value={approvalPoints[sub.id] || ''} onChange={e => setApprovalPoints({...approvalPoints, [sub.id]: e.target.value})} />
-                                 <button onClick={() => handleApprove(sub, approvalPoints[sub.id] || 10)} className="btn-luxury px-8 text-xs font-bold uppercase">批准</button>
+                                 <button onClick={() => handleApprove(sub, approvalPoints[sub.id] || 10)} className="btn-primary px-8 text-xs font-bold uppercase">批准</button>
                                  <button onClick={() => handleReject(sub)} className="bg-slate-200 px-4 rounded-xl text-xs font-bold text-slate-500">拒絕</button>
                               </div>
                            </div>
@@ -907,10 +917,10 @@
                                  <option value="total">累計點數</option>
                               </select>
                            </div>
-                           <button onClick={addMission} className="w-full py-2 btn-luxury rounded-lg text-[10px] font-bold uppercase tracking-widest">加入任務</button>
+                           <button onClick={addMission} className="w-full py-2 btn-primary rounded-lg text-[10px] font-bold uppercase tracking-widest">加入任務</button>
                         </div>
                      </div>
-                     <button onClick={handleSaveGameSettings} className="w-full py-4 btn-luxury rounded-xl font-bold text-xs uppercase tracking-widest shadow-xl">儲存全系統設定</button>
+                     <button onClick={handleSaveGameSettings} className="w-full py-4 btn-primary rounded-xl font-bold text-xs uppercase tracking-widest shadow-xl">儲存全系統設定</button>
                   </div>
                   
                   <div className="luxury-card p-7 rounded-[35px] space-y-6 admin-scratch-form">
@@ -930,7 +940,7 @@
                         <input type="file" className="text-xs" onChange={e => setAdminScratchImage(e.target.files[0])} />
                         <div className="flex gap-2">
                            {editingScratchId && <button onClick={() => setEditingScratchId(null)} className="flex-1 bg-slate-100 py-3 rounded-xl text-xs font-bold text-slate-500">取消</button>}
-                           <button onClick={handleAddScratchActivity} disabled={isAddingReward} className="flex-[2] btn-luxury py-3 rounded-xl text-xs font-bold uppercase">{editingScratchId ? '更新' : '發布'}</button>
+                           <button onClick={handleAddScratchActivity} disabled={isAddingReward} className="flex-[2] btn-primary py-3 rounded-xl text-xs font-bold uppercase">{editingScratchId ? '更新' : '發布'}</button>
                         </div>
                         <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
                            {scratchActivities.map(g => (
