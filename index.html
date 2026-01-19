@@ -127,7 +127,7 @@
   <div id="loading-screen">
     <div class="animate-float loading-icon">🛒</div>
     <div style="color:#0f172a; font-weight:300; letter-spacing: 0.2em; font-size: 14px; margin-bottom: 8px;">即將進入應有盡有大超商</div>
-    <div id="loading-status" style="font-size:10px; color:#94a3b8;">正在驗證身分...</div>
+    <div id="loading-status" style="font-size:10px; color:#94a3b8;">正在為您開啟精品服務...</div>
     <button class="retry-btn" id="retry-btn" onclick="window.location.reload()">重新載入</button>
   </div>
 
@@ -193,6 +193,7 @@
         Ticket: (<Fragment><path d="M2 9V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2-2v4a2 2 0 0 0 0 4v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 0 0-4Z"/><path d="M13 3v18M9 3v18M15 3v18"/></Fragment>),
         Store: (<Fragment><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></Fragment>),
         History: (<Fragment><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></Fragment>),
+        Image: (<Fragment><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></Fragment>),
         Plus: (<Fragment><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Fragment>),
         Dice: (<Fragment><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/></Fragment>),
         Hand: (<Fragment><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></Fragment>),
@@ -211,6 +212,57 @@
           {icons[name] || null}
         </svg>
       );
+    };
+
+    const ScratchCell = ({ value, canScratch, onRevealed, isRevealed }) => {
+      const canvasRef = useRef(null);
+      const [revealed, setRevealed] = useState(isRevealed);
+      useEffect(() => { setRevealed(isRevealed); }, [isRevealed]);
+      useEffect(() => {
+        const canvas = canvasRef.current;
+        if(!canvas) return;
+        if (revealed) { canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height); return; }
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#94a3b8'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#f1f5f9'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('刮', canvas.width/2, canvas.height/2 + 5);
+      }, [revealed]);
+      const handleScratch = (e) => {
+        if(revealed || !canScratch) return;
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        const ctx = canvas.getContext('2d');
+        ctx.globalCompositeOperation = 'destination-out'; ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.fill();
+        if(!revealed) { setRevealed(true); onRevealed(value); }
+      };
+      return (
+        <div className={`scratch-grid-cell ${revealed ? 'revealed' : ''}`}>
+          <div className="scratch-content">{value}</div>
+          <canvas ref={canvasRef} className="scratch-canvas" width={80} height={80} style={{ pointerEvents: revealed ? 'none' : 'auto' }} onMouseMove={(e) => e.buttons === 1 && handleScratch(e)} onTouchMove={handleScratch} onMouseDown={handleScratch} onTouchStart={handleScratch} />
+        </div>
+      );
+    };
+
+    const compressImage = (file) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+          const img = new Image();
+          img.src = e.target.result;
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 400; 
+            const scale = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.5)); 
+          };
+        };
+      });
     };
 
     function App() {
@@ -255,11 +307,30 @@
       const [wishName, setWishName] = useState('');
       const [checkInImage, setCheckInImage] = useState(null);
       const [isCheckingIn, setIsCheckingIn] = useState(false);
+      const [adminRewardName, setAdminRewardName] = useState('');
+      const [adminRewardCost, setAdminRewardCost] = useState('');
+      const [adminRewardImage, setAdminRewardImage] = useState(null);
+      const [isAddingReward, setIsAddingReward] = useState(false);
 
       const [newMissionTitle, setNewMissionTitle] = useState('');
       const [newMissionTarget, setNewMissionTarget] = useState('');
       const [newMissionReward, setNewMissionReward] = useState('');
       const [newMissionType, setNewMissionType] = useState('streak');
+      const [announcement, setAnnouncement] = useState('應有盡有大超商 精品生活新定義');
+
+      const [scratchActivities, setScratchActivities] = useState([]);
+      const [selectedScratchGame, setSelectedScratchGame] = useState(null); 
+      const [canScratchNow, setCanScratchNow] = useState(false);
+      const [currentGameProgress, setCurrentGameProgress] = useState([]); 
+      const [allScratchProgress, setAllScratchProgress] = useState([]);
+      const [adminMonitoringGame, setAdminMonitoringGame] = useState(null);
+      const [adminScratchTitle, setAdminScratchTitle] = useState('');
+      const [adminScratchCost, setAdminScratchCost] = useState('');
+      const [adminScratchPrize, setAdminScratchPrize] = useState('');
+      const [adminScratchTarget, setAdminScratchTarget] = useState('');
+      const [adminScratchWinnerIndex, setAdminScratchWinnerIndex] = useState(null);
+      const [adminScratchImage, setAdminScratchImage] = useState(null);
+      const [editingScratchId, setEditingScratchId] = useState(null);
 
       const getPublicRef = (name) => collection(db, 'artifacts', appId, 'public', 'data', name);
 
@@ -278,6 +349,7 @@
       // --- 功能處理 ---
       const handleSaveGameSettings = async () => { try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'games'), pendingSettings, { merge: true }); alert("設定已更新"); } catch(e) { alert("更新失敗"); } };
       const handleApprove = async (sub, pts) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', sub.id), { status: 'approved', awardedPoints: parseInt(pts) }); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(pts), totalIssued: increment(pts) }); alert("已批准"); };
+      const handleReject = async (sub) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', sub.id), { status: 'rejected', rejectionReason: rejectionReasons[sub.id] || "不符合規則", awardedPoints: 0 }); alert("已駁回"); };
       const checkAdmin = () => { if (adminPass === 'love1314') { setIsAdmin(true); setShowAdminLogin(false); setActiveTab('admin'); setPendingSettings({...gameSettings}); alert('管理員 您好'); } else alert('密碼錯誤'); };
 
       const handleCheckIn = async () => {
@@ -355,6 +427,124 @@
 
       const handleRedeem = async (r) => { if(points < r.cost) return alert("點數不足"); if(confirm(`兌換 ${r.name}?`)) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-r.cost), totalRedeemed: increment(r.cost) }); await addDoc(getPublicRef('submissions'), { description: `🎁 已兌換：${r.name}`, image: r.image, status: 'redeemed', awardedPoints: -r.cost, timestamp: serverTimestamp(), userId: user.uid }); alert("兌換成功"); } };
 
+      const handleUploadTask = async () => {
+        if (!desc.trim() || !selectedFile) return alert("請填寫內容並附上照片");
+        setIsUploading(true);
+        try {
+          const imgBase64 = await compressImage(selectedFile);
+          await addDoc(getPublicRef('submissions'), { description: desc, image: imgBase64, status: 'pending', timestamp: serverTimestamp(), userId: user.uid });
+          setDesc(''); setSelectedFile(null); alert("提交成功，等待審核");
+        } catch(e){ alert("提交失敗"); } finally { setIsUploading(false); }
+      };
+
+      const handleMakeWish = async () => {
+        if(!wishName) return;
+        setIsWishing(true);
+        try {
+          await addDoc(getPublicRef('rewards'), { name: wishName, cost: 0, available: false, timestamp: serverTimestamp(), userId: user.uid });
+          setWishName(''); alert("許願已送出");
+        } catch(e) {} finally { setIsWishing(false); }
+      };
+
+      const handleUploadTaskByAdmin = async () => {
+        if (!adminRewardName || !adminRewardCost) return;
+        setIsAddingReward(true);
+        try {
+          const img = adminRewardImage ? await compressImage(adminRewardImage) : "https://placehold.co/400x300/e2e8f0/64748b?text=Gift";
+          await addDoc(getPublicRef('rewards'), { name: adminRewardName, cost: parseInt(adminRewardCost), image: img, available: true, timestamp: serverTimestamp() });
+          setAdminRewardName(''); setAdminRewardCost(''); alert("上架成功");
+        } catch(e) { alert("失敗"); } finally { setIsAddingReward(false); }
+      };
+
+      const handleWithdraw = async () => {
+        const lockHrs = gameSettings.bankLockHours || 24;
+        if(savings.lastDepositTime) {
+            const passed = (Date.now() - savings.lastDepositTime.seconds*1000) / 3600000;
+            if(passed < lockHrs) return alert(`目前處於閉鎖期，尚需等待 ${(lockHrs - passed).toFixed(1)} 小時`);
+        }
+        const amt = parseInt(prompt("提領金額:"));
+        if(!amt || (savings.balance || 0) < amt) return;
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(amt), totalIssued: increment(amt) });
+        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), { balance: (savings.balance || 0) - amt }, { merge: true });
+        alert("提領成功");
+      };
+
+      const handlePayToScratch = async (game) => {
+        if(points < game.cost) return alert("點數不足");
+        if(!confirm(`確定花 ${game.cost} 點玩一次？`)) return;
+        try {
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-game.cost), totalRedeemed: increment(game.cost) });
+          await addDoc(getPublicRef('submissions'), { description: `🎲 參加格子樂：${game.title}`, status: 'scratch', awardedPoints: -game.cost, timestamp: serverTimestamp(), userId: user.uid });
+          setCanScratchNow(true);
+        } catch(e) { alert("失敗"); }
+      };
+
+      const handleRevealed = async (val, game, index) => {
+        setCanScratchNow(false);
+        const progressDocId = `${game.id}_${user.uid}`;
+        const progressRef = doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', progressDocId);
+        try {
+          await setDoc(progressRef, { revealedIndices: arrayUnion(index), gameId: game.id, userId: user.uid, timestamp: serverTimestamp() }, { merge: true });
+        } catch(e) { console.error("Save progress failed", e); }
+        if(String(val) === String(game.target)) {
+          alert(`🎉 恭喜刮中：${game.prize}`);
+          await addDoc(getPublicRef('submissions'), { description: `🎁 刮刮樂中獎：${game.prize} (${game.title})`, image: game.image || "https://placehold.co/400x300/e0f2fe/0ea5e9?text=WINNER", status: 'redeemed', timestamp: serverTimestamp(), userId: user.uid, awardedPoints: 0 });
+        }
+      };
+
+      const handleAddScratchActivity = async () => {
+        if (!adminScratchTitle || !adminScratchPrize || !adminScratchCost) return alert("資料不全");
+        setIsAddingReward(true);
+        try {
+          let img = null;
+          if (adminScratchImage) img = await compressImage(adminScratchImage);
+          if (editingScratchId) {
+             const updateData = { title: adminScratchTitle, prize: adminScratchPrize, cost: parseInt(adminScratchCost) };
+             if(img) updateData.image = img;
+             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scratch_activities', editingScratchId), updateData);
+             alert("更新成功");
+             setEditingScratchId(null);
+          } else {
+             if (!adminScratchTarget || adminScratchWinnerIndex === null) return alert("需設定中獎數字與位置");
+             const targetNum = parseInt(adminScratchTarget);
+             const grid = new Array(16).fill(0);
+             grid[adminScratchWinnerIndex] = targetNum;
+             const others = [];
+             for(let i=1; i<=16; i++) { if(i !== targetNum) others.push(i); }
+             others.sort(() => Math.random() - 0.5);
+             let otherIdx = 0;
+             for(let i=0; i<16; i++) { if(i !== adminScratchWinnerIndex) { grid[i] = others[otherIdx++]; } }
+             await addDoc(getPublicRef('scratch_activities'), { 
+                title: adminScratchTitle, prize: adminScratchPrize, cost: parseInt(adminScratchCost),
+                target: adminScratchTarget, grid: grid, image: img || "https://placehold.co/400x300/e2e8f0/64748b?text=Game", isActive: true, timestamp: serverTimestamp() 
+             });
+             alert("發布成功");
+          }
+          setAdminScratchTitle(''); setAdminScratchPrize(''); setAdminScratchCost(''); setAdminScratchTarget(''); setAdminScratchWinnerIndex(null); setAdminScratchImage(null);
+        } catch(e) { alert("操作失敗"); console.error(e); } finally { setIsAddingReward(false); }
+      };
+
+      const handleEditScratch = (game) => {
+        setEditingScratchId(game.id);
+        setAdminScratchTitle(game.title);
+        setAdminScratchPrize(game.prize);
+        setAdminScratchCost(game.cost);
+        setAdminScratchTarget(game.target);
+        setAdminScratchWinnerIndex(null); 
+        document.querySelector('.admin-scratch-form').scrollIntoView({ behavior: 'smooth' });
+      };
+
+      const handleGivePoints = async () => {
+        if (!givePointsAmount) return alert("請輸入分數");
+        const pts = parseInt(givePointsAmount);
+        const reason = givePointsReason.trim() || "額外獎勵";
+        try {
+          await addDoc(getPublicRef('submissions'), { description: `🎁 系統補給：${reason}`, status: 'bonus', awardedPoints: pts, timestamp: serverTimestamp(), userId: user.uid });
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(pts), totalIssued: increment(pts) });
+          alert(`已發送 ${pts} 點`);
+        } catch(e) { alert("發送失敗"); }
+      };
+
       const myCheckinPhotos = useMemo(() => submissions.filter(s => s.status === 'checkin' && s.userId === user?.uid && s.image).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)), [submissions, user]);
       const allCheckinPhotos = useMemo(() => submissions.filter(s => s.status === 'checkin' && s.image).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)), [submissions]);
       const myWishes = useMemo(() => rewards.filter(r => !r.available && (r.userId === user?.uid || !r.userId)), [rewards, user]);
@@ -364,13 +554,18 @@
           const checkins = [...new Set(mySubs.filter(s => s.status === 'checkin').map(s => new Date(s.timestamp?.seconds*1000).toDateString()))];
           return { streak: checkins.length, total: totalEarned };
       }, [submissions, user]);
+      const unreadCount = user ? notifications.filter(n => !n.readBy?.includes(user.uid)).length : 0;
 
       const updateWheelSegment = (idx, field, val) => { const ms = [...pendingSettings.wheelSegments]; ms[idx] = {...ms[idx], [field]: val}; setPendingSettings({...pendingSettings, wheelSegments: ms}); };
       const addMission = () => { if(!newMissionTitle || !newMissionTarget) return; const newM = { id: 'm'+Date.now(), title: newMissionTitle, target: parseInt(newMissionTarget), reward: parseInt(newMissionReward), type: newMissionType }; setPendingSettings({...pendingSettings, missions: [...(pendingSettings.missions||[]), newM]}); setNewMissionTitle(''); setNewMissionTarget(''); };
       const removeMission = (i) => { const ms = [...pendingSettings.missions]; ms.splice(i, 1); setPendingSettings({...pendingSettings, missions: ms}); };
+      const updateAnnounce = async () => { const newText = prompt("新公告內容：", announcement); if (newText) await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'announce'), { text: newText }); };
+      
+      const deleteItem = async (colName, id, itemName) => { if (!confirm(`確定要刪除「${itemName}」嗎？`)) return; try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', colName, id)); } catch (e) { alert("刪除失敗"); } };
+      const handleVerifyCoupon = async (couponId) => { if (!confirm('確認核銷？')) return; try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', couponId), { status: 'verified' }); alert("核銷成功"); } catch (e) { alert("失敗"); } };
 
       return (
-        <div className="max-w-md mx-auto shadow-2xl relative min-h-screen pb-24 sm:rounded-[40px] sm:my-4 sm:border-4 sm:border-slate-200 bg-[#f1f5f9] overflow-hidden flex flex-col no-scrollbar">
+        <div className="max-w-md mx-auto shadow-2xl relative min-h-screen pb-24 sm:rounded-[40px] sm:my-4 sm:border-4 sm:border-slate-200 bg-[#f8fafc] overflow-hidden flex flex-col no-scrollbar">
           
           <div className="luxury-gradient p-6 pb-8 text-white rounded-b-[40px] shadow-lg shrink-0 z-10 relative">
             <div className="flex justify-between items-center mb-6">
@@ -382,7 +577,7 @@
             </div>
             <div className="flex justify-center mb-4"><div className="point-card px-10 py-4 rounded-2xl flex flex-col items-center min-w-[200px]"><span className="text-[10px] text-slate-400 uppercase tracking-widest">目前點數</span><span className="text-5xl font-bold text-white tracking-tight">{points}</span></div></div>
             <div className="bg-white/5 border border-white/5 rounded-xl px-4 py-2 marquee mx-2 backdrop-blur-sm"><span className="text-[11px] font-light text-slate-300">{announcement}</span></div>
-            {showAdminLogin && !isAdmin && <div className="absolute top-24 right-6 bg-white p-6 rounded-2xl shadow-2xl z-50 w-64 text-slate-800 border border-slate-100 animate-in"><input type="password" placeholder="Passcode" className="w-full bg-slate-50 border p-3 rounded-xl mb-3 text-center tracking-widest outline-none text-sm" value={adminPass} onChange={e => setAdminPass(e.target.value)} autoFocus /><button onClick={checkAdmin} className="w-full btn-luxury py-3 rounded-xl font-bold text-xs uppercase">Verify</button></div>}
+            {showAdminLogin && !isAdmin && <div className="absolute top-24 right-6 bg-white p-6 rounded-2xl shadow-2xl z-50 w-64 text-slate-800 border animate-in"><input type="password" placeholder="Passcode" className="w-full bg-slate-50 border p-3 rounded-xl mb-3 text-center tracking-widest outline-none text-sm" value={adminPass} onChange={e => setAdminPass(e.target.value)} autoFocus /><button onClick={checkAdmin} className="w-full btn-luxury py-3 rounded-xl font-bold text-xs uppercase">Verify</button></div>}
           </div>
 
           <div className="p-6 flex-1 overflow-y-auto no-scrollbar space-y-8">
@@ -391,7 +586,7 @@
               <div className="space-y-8 animate-in">
                 <div className="luxury-card p-6 rounded-[30px] space-y-4">
                   <h3 className="font-bold text-slate-800 flex items-center gap-2"><Icon name="Plus" size={16}/> 賺取點數回報</h3>
-                  <textarea className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl text-sm min-h-[100px] outline-none" placeholder="描述您的努力..." value={desc} onChange={e => setDesc(e.target.value)} />
+                  <textarea className="w-full bg-slate-50 border border-slate-200 p-4 rounded-2xl text-sm min-h-[100px] outline-none" placeholder="分享今天的進步..." value={desc} onChange={e => setDesc(e.target.value)} />
                   <div className="flex gap-3">
                     <label className={`flex-[1.5] cursor-pointer py-4 rounded-xl flex items-center justify-center border border-dashed transition-all ${selectedFile ? 'border-amber-400 bg-amber-50 text-amber-600' : 'text-slate-400 border-slate-200'}`}>
                       <Icon name="Image" size={16} className="mr-2"/> <span className="font-bold text-xs">{selectedFile ? '已選擇' : '附圖'}</span>
@@ -453,6 +648,7 @@
                         <div onClick={() => setCurrentActivity('rps')} className="bg-white p-5 rounded-[24px] h-36 flex flex-col justify-between border group transition-all hover:shadow-md"><Icon name="Hand" size={24} className="text-rose-400 group-hover:scale-110 transition-transform"/><div className="text-sm font-bold text-slate-700 uppercase tracking-widest">猜拳大對決</div></div>
                         <div onClick={() => setCurrentActivity('bank')} className="bg-white p-5 rounded-[24px] h-36 flex flex-col justify-between border group transition-all hover:shadow-md"><Icon name="PiggyBank" size={24} className="text-emerald-400 group-hover:scale-110 transition-transform"/><div className="text-sm font-bold text-slate-700 uppercase tracking-widest">點數小金庫</div></div>
                         <div onClick={() => setCurrentActivity('missions')} className="bg-white p-5 rounded-[24px] h-36 flex flex-col justify-between border group transition-all hover:shadow-md"><Icon name="Target" size={24} className="text-amber-400 group-hover:scale-110 transition-transform"/><div className="text-sm font-bold text-slate-700 uppercase tracking-widest">任務佈告欄</div></div>
+                        <div onClick={() => setCurrentActivity('scratch_list')} className="bg-white p-5 rounded-[24px] h-36 flex flex-col justify-between border group transition-all hover:shadow-md"><Icon name="Ticket" size={24} className="text-slate-700 group-hover:scale-110 transition-transform"/><div className="text-sm font-bold text-slate-700 uppercase tracking-widest">刮刮樂</div></div>
                      </div>
                   ) : currentActivity === 'wheel' ? (
                      <div className="luxury-card p-8 rounded-[40px] flex flex-col items-center animate-in">
@@ -519,6 +715,29 @@
                            })}
                         </div>
                      </div>
+                  ) : currentActivity === 'scratch_list' ? (
+                      <div className="animate-in">
+                        <button onClick={() => setCurrentActivity(null)} className="mb-4 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> 大廳</button>
+                        <div className="space-y-3">
+                          {scratchActivities.length === 0 ? <p className="text-center py-10 text-xs text-slate-300">目前沒有刮刮樂</p> : scratchActivities.map(game => (
+                             <div key={game.id} onClick={() => {setSelectedScratchGame(game); setCurrentActivity('scratch_game');}} className="bg-white p-4 rounded-[20px] border border-slate-100 shadow-sm flex items-center gap-4 cursor-pointer">
+                                <div className="w-14 h-14 rounded-2xl bg-slate-100 overflow-hidden"><img src={game.image} className="w-full h-full object-cover"/></div>
+                                <div className="flex-1 min-w-0"><h4 className="font-bold text-sm truncate">{game.title}</h4><p className="text-[10px] text-slate-400">大獎: {game.prize}</p></div>
+                                <div className="text-xs font-bold text-slate-600">{game.cost} P</div>
+                             </div>
+                          ))}
+                        </div>
+                      </div>
+                  ) : currentActivity === 'scratch_game' && selectedScratchGame ? (
+                      <div className="luxury-card p-6 rounded-[30px] animate-in">
+                        <button onClick={() => {setCurrentActivity('scratch_list'); setCanScratchNow(false);}} className="mb-4 text-slate-400 flex items-center text-xs font-bold"><Icon name="ArrowLeft" size={14} className="mr-1"/> 返回</button>
+                        <div className="text-center mb-8"><h2 className="font-bold text-xl mb-1">{selectedScratchGame.title}</h2><p className="text-xs text-amber-600 font-bold">入場費：{selectedScratchGame.cost} P</p></div>
+                        {!canScratchNow ? (
+                          <div className="text-center py-10"><button onClick={() => handlePayToScratch(selectedScratchGame)} className="w-full btn-primary py-4 font-bold shadow-lg">購買入場券</button></div>
+                        ) : (
+                          <div className="grid grid-cols-4 gap-2.5">{selectedScratchGame.grid.map((val, i) => { const isRevealed = currentGameProgress.includes(i); return <ScratchCell key={i} value={val} canScratch={canScratchNow && !isRevealed} isRevealed={isRevealed} onRevealed={(v) => handleRevealed(v, selectedScratchGame, i)} />; })}</div>
+                        )}
+                      </div>
                   ) : null}
                </div>
             )}
@@ -530,10 +749,28 @@
                   <input className="settings-input" placeholder="想要什麼獎勵..." value={wishName} onChange={e => setWishName(e.target.value)} />
                   <button onClick={handleMakeWish} className="w-full btn-luxury py-4 rounded-xl font-bold text-xs uppercase tracking-widest">送出精品願望</button>
                 </div>
+                
+                {myWishes.length > 0 && (
+                  <div className="mb-2">
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-3">審核中的願望</h3>
+                    <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
+                      {myWishes.map(wish => (
+                        <div key={wish.id} className="min-w-[100px] w-[100px] flex-shrink-0 group">
+                           <div className="w-full h-24 rounded-2xl bg-white overflow-hidden mb-2 relative border border-slate-100 shadow-sm">
+                              {wish.image && <img src={wish.image} className="w-full h-full object-cover opacity-80" />}
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/5"><span className="text-[9px] bg-white/90 text-slate-600 px-2 py-1 rounded-full shadow-sm font-bold">審核中</span></div>
+                           </div>
+                           <p className="text-xs font-bold text-slate-600 truncate text-center">{wish.name}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-5">
                      {rewards.filter(r => r.available).map(item => (
                         <div key={item.id} className="luxury-card p-4 rounded-[30px] flex flex-col relative group shadow-sm border-slate-100">
-                           <div className="aspect-square bg-slate-50 rounded-2xl mb-4 overflow-hidden border border-slate-50"><img src={item.image} className="w-full h-full object-cover" /></div>
+                           <div className="aspect-square bg-slate-50 rounded-2xl mb-4 overflow-hidden border border-slate-50"><img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /></div>
                            <h4 className="font-bold text-sm mb-2 truncate px-1 text-slate-700">{item.name}</h4>
                            <button onClick={() => handleRedeem(item)} className="w-full py-3 bg-slate-800 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider">{item.cost} P 兌換</button>
                            {isAdmin && <div onClick={() => deleteItem('rewards', item.id, item.name)} className="delete-badge"><Icon name="Trash2" size={12}/></div>}
@@ -543,7 +780,22 @@
               </div>
             )}
 
-            {/* Admin Tab */}
+            {activeTab === 'notifs' && (
+                <div className="space-y-4 animate-in">
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-2">通知中心</h3>
+                    {notifications.length === 0 ? (
+                        <div className="text-center py-20 text-slate-300 text-xs font-light">暫無新通知</div>
+                    ) : (
+                        notifications.map(n => (
+                            <div key={n.id} className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm">
+                                <div className="flex justify-between items-start mb-1"><h4 className="font-bold text-slate-700 text-sm">{n.title}</h4><span className="text-[10px] text-slate-300">{n.timestamp ? new Date(n.timestamp.seconds * 1000).toLocaleDateString() : ''}</span></div>
+                                <p className="text-xs text-slate-500 leading-relaxed font-light">{n.message}</p>
+                            </div>
+                        ))
+                    )}
+                </div>
+            )}
+
             {activeTab === 'admin' && isAdmin && (
                <div className="space-y-8 animate-in pb-12">
                   <div className="luxury-gradient p-6 rounded-[30px] text-white shadow-lg relative overflow-hidden">
@@ -552,6 +804,7 @@
                       <div className="bg-white/10 p-4 rounded-2xl border border-white/10"><p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mb-1">已發放</p><p className="text-2xl font-bold">{stats.totalIssued}</p></div>
                       <div className="bg-white/10 p-4 rounded-2xl border border-white/10"><p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mb-1">已回收</p><p className="text-2xl font-bold">{stats.totalRedeemed}</p></div>
                     </div>
+                    <button onClick={updateAnnounce} className="w-full mt-4 bg-white/10 py-3 rounded-xl text-[10px] font-bold hover:bg-white/20 transition-colors">修改公告</button>
                   </div>
 
                   <div className="luxury-card p-7 rounded-[35px] space-y-6">
@@ -562,8 +815,9 @@
                               {sub.image && <img src={sub.image} className="w-full h-44 object-cover rounded-xl" />}
                               <p className="text-xs font-medium italic">"{sub.description}"</p>
                               <div className="flex gap-3">
-                                 <input type="number" className="bg-white border p-3 rounded-xl text-xs flex-1 font-bold" placeholder="10" value={approvalPoints[sub.id] || ''} onChange={e => setApprovalPoints({...approvalPoints, [sub.id]: e.target.value})} />
+                                 <input type="number" className="settings-input flex-1 font-bold" placeholder="10" value={approvalPoints[sub.id] || ''} onChange={e => setApprovalPoints({...approvalPoints, [sub.id]: e.target.value})} />
                                  <button onClick={() => handleApprove(sub, approvalPoints[sub.id] || 10)} className="btn-luxury px-8 text-xs font-bold uppercase">批准</button>
+                                 <button onClick={() => handleReject(sub)} className="bg-slate-200 px-4 rounded-xl text-xs font-bold text-slate-500">拒絕</button>
                               </div>
                            </div>
                         ))}
@@ -592,6 +846,12 @@
                      </div>
                      
                      <div className="border-t border-slate-100 pt-6">
+                        <p className="settings-label">轉盤獎項 (6項)</p>
+                        <div className="grid grid-cols-2 gap-2 mb-4">
+                           {pendingSettings?.wheelSegments?.map((s, i) => (
+                             <div key={i} className="flex gap-1"><input className="settings-input w-2/3" value={s.label} onChange={e => updateWheelSegment(i, 'label', e.target.value)} /><input type="number" className="settings-input w-1/3" value={s.value} onChange={e => updateWheelSegment(i, 'value', parseInt(e.target.value))} /></div>
+                           ))}
+                        </div>
                         <p className="settings-label">任務管理</p>
                         <div className="space-y-2 mb-4">
                            {pendingSettings?.missions?.map((m, i) => (
@@ -616,6 +876,54 @@
                      </div>
                      <button onClick={handleSaveGameSettings} className="w-full py-4 btn-luxury rounded-xl font-bold text-xs uppercase tracking-widest shadow-xl">儲存全系統設定</button>
                   </div>
+                  
+                  <div className="luxury-card p-7 rounded-[35px] space-y-6 admin-scratch-form">
+                     <h3 className="font-bold flex items-center gap-3 text-slate-800 text-xs tracking-widest uppercase">格子樂活動管理</h3>
+                     <div className="space-y-4">
+                        <input className="settings-input" placeholder="活動標題" value={adminScratchTitle} onChange={e => setAdminScratchTitle(e.target.value)} />
+                        <div className="grid grid-cols-2 gap-2">
+                           <input className="settings-input" placeholder="大獎" value={adminScratchPrize} onChange={e => setAdminScratchPrize(e.target.value)} />
+                           <input type="number" className="settings-input" placeholder="花費" value={adminScratchCost} onChange={e => setAdminScratchCost(e.target.value)} />
+                        </div>
+                        {!editingScratchId && (
+                           <div className="grid grid-cols-2 gap-2">
+                              <input type="number" className="settings-input" placeholder="中獎號(1-16)" value={adminScratchTarget} onChange={e => setAdminScratchTarget(e.target.value)} />
+                              <input type="number" className="settings-input" placeholder="中獎位置(0-15)" value={adminScratchWinnerIndex} onChange={e => setAdminScratchWinnerIndex(e.target.value)} />
+                           </div>
+                        )}
+                        <input type="file" className="text-xs" onChange={e => setAdminScratchImage(e.target.files[0])} />
+                        <div className="flex gap-2">
+                           {editingScratchId && <button onClick={() => setEditingScratchId(null)} className="flex-1 bg-slate-100 py-3 rounded-xl text-xs font-bold text-slate-500">取消</button>}
+                           <button onClick={handleAddScratchActivity} disabled={isAddingReward} className="flex-[2] btn-luxury py-3 rounded-xl text-xs font-bold uppercase">{editingScratchId ? '更新' : '發布'}</button>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                           {scratchActivities.map(g => (
+                              <div key={g.id} className="flex items-center justify-between bg-slate-50 p-2 rounded-lg">
+                                 <span className="text-xs font-bold text-slate-600">{g.title}</span>
+                                 <div className="flex gap-2">
+                                    <button onClick={() => handleEditScratch(g)} className="text-blue-500 font-bold text-[10px]">編輯</button>
+                                    <button onClick={() => setAdminMonitoringGame(g)} className="text-emerald-500 font-bold text-[10px]">監控</button>
+                                    <button onClick={() => deleteItem('scratch_activities', g.id, g.title)} className="text-red-400 p-1"><Icon name="Trash2" size={12}/></button>
+                                 </div>
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                  </div>
+                  
+                  {/* Scratch Monitoring */}
+                  {adminMonitoringGame && (
+                     <div className="luxury-card p-6 rounded-[30px] animate-in">
+                       <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-sm">監控: {adminMonitoringGame.title}</h3><button onClick={() => setAdminMonitoringGame(null)} className="text-xs font-bold text-slate-400">關閉</button></div>
+                       <div className="grid grid-cols-4 gap-2">
+                          {adminMonitoringGame.grid.map((val, i) => {
+                             const isRev = getRevealedCellsForGame(adminMonitoringGame.id).has(i);
+                             return <div key={i} className={`aspect-square flex items-center justify-center border rounded-lg font-bold ${isRev ? 'bg-slate-100 text-slate-800' : 'text-slate-300'}`}>{isRev ? val : '?'}</div>
+                          })}
+                       </div>
+                       <p className="text-center text-xs mt-4 text-slate-400">已刮開 {getRevealedCellsForGame(adminMonitoringGame.id).size} 格</p>
+                     </div>
+                  )}
 
                   <div className="luxury-card p-6 rounded-[30px] space-y-6">
                      <h3 className="font-bold flex items-center gap-3 text-slate-800 text-xs tracking-widest uppercase">商品上架</h3>
@@ -630,6 +938,7 @@
             )}
           </div>
 
+          {/* Bottom Nav */}
           <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-100 px-8 py-5 flex justify-between items-center text-[9px] font-bold text-slate-300 max-w-md mx-auto z-50 sm:rounded-b-[40px] shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
             <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'home' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}><Icon name="Camera" size={24} className={activeTab === 'home' ? 'text-slate-800' : ''}/><span>HOME</span></button>
             <button onClick={() => setActiveTab('activities')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'activities' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}><Icon name="Dice" size={24} className={activeTab === 'activities' ? 'text-slate-800' : ''}/><span>GAMES</span></button>
