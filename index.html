@@ -105,15 +105,27 @@
     button { font-weight: 400 !important; }
     .log-item { border-bottom: 1px solid #f1f5f9; }
     .log-item:last-child { border-bottom: none; }
+    
+    /* Loading Screen Styles */
+    #loading-screen {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #f8fafc; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 100;
+      transition: opacity 0.5s ease;
+    }
+    .loading-icon { font-size: 40px; margin-bottom: 10px; }
+    .loading-text { letter-spacing: 2px; font-size: 13px; color: #94a3b8; }
+    .retry-btn { margin-top: 20px; padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 8px; color: #64748b; font-size: 12px; cursor: pointer; display: none; }
   </style>
 </head>
 <body>
 
   <div id="root"></div>
 
-  <div id="loading-screen" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); text-align:center; color:#0ea5e9; font-weight:300; z-index:100;">
-    <div class="animate-float" style="font-size: 40px; margin-bottom: 10px;">🛒</div>
-    <div style="letter-spacing: 2px; font-size: 13px; color: #94a3b8;">正在連線至應有盡有大超商...</div>
+  <div id="loading-screen">
+    <div class="animate-float loading-icon">🛒</div>
+    <div class="loading-text" id="loading-msg">正在連線至應有盡有大超商...</div>
+    <button class="retry-btn" id="retry-btn" onclick="window.location.reload()">重新連線</button>
   </div>
 
   <script type="module">
@@ -121,39 +133,57 @@
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // 使用環境提供的配置
-    const firebaseConfig = JSON.parse(__firebase_config);
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    // 使用環境提供的 App ID
-    const finalAppId = typeof __app_id !== 'undefined' ? __app_id : "default-app"; 
+    try {
+      // 使用環境提供的配置
+      const firebaseConfig = JSON.parse(__firebase_config);
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      // 使用環境提供的 App ID
+      const finalAppId = typeof __app_id !== 'undefined' ? __app_id : "default-app"; 
 
-    // 將 Firebase 功能掛載到 window 以供 Babel 轉譯後的 React 使用
-    window.fb = { 
-      db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, 
-      increment, serverTimestamp, deleteDoc, appId: finalAppId, 
-      signInAnonymously, onAuthStateChanged, signInWithCustomToken
-    };
-    
-    // 預設初始化登入
-    (async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-           await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-           await signInAnonymously(auth);
+      // 將 Firebase 功能掛載到 window
+      window.fb = { 
+        db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, 
+        increment, serverTimestamp, deleteDoc, appId: finalAppId, 
+        signInAnonymously, onAuthStateChanged, signInWithCustomToken,
+        isReady: true
+      };
+      
+      // 預設初始化登入
+      (async () => {
+        try {
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+             await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+             await signInAnonymously(auth);
+          }
+        } catch (e) {
+          console.error("Auth init failed", e);
+          document.getElementById('loading-msg').innerText = "登入驗證失敗，請重試";
+          document.getElementById('retry-btn').style.display = 'block';
         }
-      } catch (e) {
-        console.error("Auth init failed", e);
+      })();
+    } catch (err) {
+      console.error("Firebase init failed", err);
+      document.getElementById('loading-msg').innerText = "系統初始化失敗";
+      document.getElementById('retry-btn').style.display = 'block';
+    }
+    
+    // 超時處理
+    setTimeout(() => {
+      const ls = document.getElementById('loading-screen');
+      if (ls && ls.style.display !== 'none' && !window.fb?.isReady) {
+         document.getElementById('loading-msg').innerText = "連線回應較慢...";
+         document.getElementById('retry-btn').style.display = 'block';
       }
-    })();
+    }, 5000);
   </script>
 
   <script type="text/babel">
     const { useState, useEffect, useRef, Fragment } = React;
 
-    // --- 圖示元件 (保持原樣) ---
+    // --- 圖示元件 ---
     const Icon = ({ name, size = 24, className = "" }) => {
       const icons = {
         Point: <path d="M6 2L3 6V20A2 2 0 0 0 5 22H19A2 2 0 0 0 21 20V6L18 2H6ZM3 6H21M16 10A4 4 0 0 1 8 10" />,
@@ -258,6 +288,23 @@
         };
       });
     };
+
+    // React App 初始化等待
+    function InitWrapper() {
+      const [ready, setReady] = useState(false);
+      useEffect(() => {
+        const timer = setInterval(() => {
+          if (window.fb && window.fb.isReady) {
+            setReady(true);
+            clearInterval(timer);
+          }
+        }, 100);
+        return () => clearInterval(timer);
+      }, []);
+
+      if (!ready) return null;
+      return <App />;
+    }
 
     function App() {
       const { 
@@ -919,7 +966,7 @@
     }
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+    root.render(<InitWrapper />);
   </script>
 </body>
 </html>
