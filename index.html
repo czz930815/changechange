@@ -74,6 +74,11 @@
       box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
       border: 2px solid white;
     }
+    .scratch-grid-cell.revealed {
+      background: #f1f5f9;
+      border-color: #e2e8f0;
+      box-shadow: none;
+    }
     .scratch-canvas {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -88,6 +93,10 @@
       font-weight: 700; font-size: 1.2rem;
       z-index: 1; background: white;
       color: #0ea5e9;
+    }
+    .scratch-grid-cell.revealed .scratch-content {
+      color: #94a3b8; /* 已經開過的顏色變淡 */
+      background: transparent;
     }
 
     .btn-action {
@@ -137,7 +146,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, setPersistence, browserLocalPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc, arrayUnion, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     function logError(msg) {
       console.error(msg);
@@ -178,7 +187,7 @@
       // 將 Firebase 功能掛載到 window
       window.fb = { 
         db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, 
-        increment, serverTimestamp, deleteDoc, appId: finalAppId, 
+        increment, serverTimestamp, deleteDoc, arrayUnion, getDoc, appId: finalAppId, 
         signInAnonymously, onAuthStateChanged, signInWithCustomToken,
         isReady: true
       };
@@ -243,7 +252,8 @@
         Dice: (<Fragment><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/></Fragment>),
         Calendar: (<Fragment><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></Fragment>),
         XCircle: (<Fragment><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></Fragment>),
-        ArrowLeft: (<Fragment><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></Fragment>)
+        ArrowLeft: (<Fragment><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></Fragment>),
+        Eye: (<Fragment><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></Fragment>)
       };
       return (
         <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -253,13 +263,24 @@
     };
 
     // --- 單格刮刮元件 ---
-    const ScratchCell = ({ value, canScratch, onRevealed }) => {
+    const ScratchCell = ({ value, canScratch, onRevealed, isRevealed }) => {
       const canvasRef = useRef(null);
-      const [revealed, setRevealed] = useState(false);
+      const [revealed, setRevealed] = useState(isRevealed);
+
+      useEffect(() => {
+        setRevealed(isRevealed);
+      }, [isRevealed]);
 
       useEffect(() => {
         const canvas = canvasRef.current;
         if(!canvas) return;
+        
+        if (revealed) {
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          return;
+        }
+
         const ctx = canvas.getContext('2d');
         ctx.fillStyle = '#cbd5e1';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -267,10 +288,12 @@
         ctx.font = 'bold 12px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('刮', canvas.width/2, canvas.height/2 + 5);
-      }, []);
+      }, [revealed]);
 
       const handleScratch = (e) => {
-        if(!canScratch || revealed) return;
+        if(revealed) return;
+        if(!canScratch) return;
+
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
         const rect = canvas.getBoundingClientRect();
@@ -291,12 +314,13 @@
       };
 
       return (
-        <div className="scratch-grid-cell">
+        <div className={`scratch-grid-cell ${revealed ? 'revealed' : ''}`}>
           <div className="scratch-content">{value}</div>
           <canvas 
             ref={canvasRef} 
             className="scratch-canvas"
             width={80} height={80}
+            style={{ pointerEvents: revealed ? 'none' : 'auto' }} 
             onMouseMove={(e) => e.buttons === 1 && handleScratch(e)}
             onTouchMove={handleScratch}
             onMouseDown={handleScratch}
@@ -327,7 +351,6 @@
       });
     };
 
-    // React App 初始化等待
     function InitWrapper() {
       const [ready, setReady] = useState(false);
       useEffect(() => {
@@ -347,7 +370,7 @@
     function App() {
       const { 
         db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, 
-        increment, serverTimestamp, deleteDoc, appId,
+        increment, serverTimestamp, deleteDoc, arrayUnion, getDoc, appId,
         signInAnonymously, onAuthStateChanged 
       } = window.fb;
 
@@ -386,8 +409,11 @@
 
       // New Scratch States
       const [scratchActivities, setScratchActivities] = useState([]);
-      const [selectedScratchGame, setSelectedScratchGame] = useState(null); // The game object currently being played
+      const [selectedScratchGame, setSelectedScratchGame] = useState(null); 
       const [canScratchNow, setCanScratchNow] = useState(false);
+      const [currentGameProgress, setCurrentGameProgress] = useState([]); 
+      const [allScratchProgress, setAllScratchProgress] = useState([]); // Admin monitoring
+      const [adminMonitoringGame, setAdminMonitoringGame] = useState(null);
       
       // Admin Scratch Inputs
       const [adminScratchTitle, setAdminScratchTitle] = useState('');
@@ -396,6 +422,10 @@
       const [adminScratchTarget, setAdminScratchTarget] = useState('');
       const [adminScratchWinnerIndex, setAdminScratchWinnerIndex] = useState(null);
       const [adminScratchImage, setAdminScratchImage] = useState(null);
+
+      // Admin Give Points
+      const [givePointsReason, setGivePointsReason] = useState('');
+      const [givePointsAmount, setGivePointsAmount] = useState('');
 
       // Check-in
       const [isCheckingIn, setIsCheckingIn] = useState(false);
@@ -436,14 +466,37 @@
         const unsubScratchActs = onSnapshot(getPublicRef('scratch_activities'), (s) => {
           setScratchActivities(s.docs.map(d => ({id: d.id, ...d.data()})));
         });
+        // Fetch all scratch progress for admin monitoring
+        const unsubScratchProgress = onSnapshot(getPublicRef('scratch_progress'), (s) => {
+          setAllScratchProgress(s.docs.map(d => ({id: d.id, ...d.data()})));
+        });
         const unsubAnnounce = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'announce'), (d) => {
           if (d.exists()) setAnnouncement(d.data().text);
         });
         const unsubNotifs = onSnapshot(getPublicRef('notifications'), (s) => {
           setNotifications(s.docs.map(d => ({id: d.id, ...d.data()})));
         });
-        return () => { unsubStats(); unsubSubs(); unsubRewards(); unsubNotifs(); unsubAnnounce(); unsubScratchActs(); };
+        return () => { unsubStats(); unsubSubs(); unsubRewards(); unsubNotifs(); unsubAnnounce(); unsubScratchActs(); unsubScratchProgress(); };
       }, [user, db, appId]);
+
+      // 監聽當前遊戲的進度
+      useEffect(() => {
+        if (!user || !selectedScratchGame) {
+          setCurrentGameProgress([]);
+          return;
+        }
+        
+        const progressDocId = `${selectedScratchGame.id}_${user.uid}`;
+        const unsubProgress = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', progressDocId), (d) => {
+          if (d.exists()) {
+            setCurrentGameProgress(d.data().revealedIndices || []);
+          } else {
+            setCurrentGameProgress([]);
+          }
+        });
+        
+        return () => unsubProgress();
+      }, [selectedScratchGame, user]);
 
       const deleteItem = async (colName, id, itemName) => {
         if (!confirm(`確定要刪除「${itemName}」嗎？`)) return;
@@ -481,6 +534,24 @@
           await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(pts), totalIssued: increment(pts) });
           alert(`批准成功！`);
         } catch(e) { alert("失敗"); }
+      };
+
+      const handleGivePoints = async () => {
+        if (!givePointsAmount) return alert("請輸入分數");
+        const pts = parseInt(givePointsAmount);
+        const reason = givePointsReason.trim() || "額外獎勵";
+        try {
+          await addDoc(getPublicRef('submissions'), { 
+            description: `🎁 系統補給：${reason}`, 
+            status: 'bonus', 
+            awardedPoints: pts, 
+            timestamp: serverTimestamp(), 
+            userId: user.uid 
+          });
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(pts), totalIssued: increment(pts) });
+          setGivePointsAmount(''); setGivePointsReason('');
+          alert(`已發送 ${pts} 點！`);
+        } catch(e) { alert("發送失敗"); }
       };
 
       const handleDeductPoints = async () => {
@@ -568,12 +639,29 @@
         } catch(e) { alert("失敗"); }
       };
 
-      const handleRevealed = async (val, game) => {
+      const handleRevealed = async (val, game, index) => {
         setCanScratchNow(false);
+        
+        // 1. 記錄開啟狀態 (增加 gameId 欄位以利搜尋)
+        const progressDocId = `${game.id}_${user.uid}`;
+        const progressRef = doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', progressDocId);
+        
+        try {
+          await setDoc(progressRef, {
+            revealedIndices: arrayUnion(index),
+            gameId: game.id,
+            userId: user.uid,
+            timestamp: serverTimestamp()
+          }, { merge: true });
+        } catch(e) {
+          console.error("Save progress failed", e);
+        }
+
+        // 2. 判斷中獎
         if(String(val) === String(game.target)) {
           alert(`🎉 太神啦！恭喜刮中：${game.prize}`);
           await addDoc(getPublicRef('submissions'), { description: `🎁 刮刮樂中獎：${game.prize} (${game.title})`, image: game.image || "https://placehold.co/400x300/e0f2fe/0ea5e9?text=WINNER", status: 'redeemed', timestamp: serverTimestamp(), userId: user.uid, awardedPoints: 0 });
-        } else { alert(`嗚，是 ${val}... 沒中！再來一次？💪`); }
+        }
       };
 
       const handleAddScratchActivity = async () => {
@@ -592,12 +680,10 @@
           const grid = new Array(16).fill(0);
           grid[adminScratchWinnerIndex] = targetNum;
 
-          // Create array 1-16 excluding target
           const others = [];
           for(let i=1; i<=16; i++) {
             if(i !== targetNum) others.push(i);
           }
-          // Shuffle others
           others.sort(() => Math.random() - 0.5);
 
           let otherIdx = 0;
@@ -618,7 +704,6 @@
             timestamp: serverTimestamp() 
           });
           
-          // Reset fields
           setAdminScratchTitle(''); setAdminScratchPrize(''); setAdminScratchCost(''); setAdminScratchTarget(''); setAdminScratchWinnerIndex(null); setAdminScratchImage(null);
           alert("格子樂活動發布成功！");
         } catch(e) { alert("發布失敗"); } finally { setIsAddingReward(false); }
@@ -638,6 +723,21 @@
       };
 
       const unreadCount = user ? notifications.filter(n => !n.readBy?.includes(user.uid)).length : 0;
+
+      // Helper to calculate revealed cells for a specific game in admin monitor
+      const getRevealedCellsForGame = (gameId) => {
+        // Find all progress docs related to this gameId
+        // Since we save `gameId` in the doc, we can filter `allScratchProgress`
+        // Also fallback to checking ID prefix for backward compatibility
+        const relevantDocs = allScratchProgress.filter(p => p.gameId === gameId || p.id.startsWith(gameId));
+        const allRevealed = new Set();
+        relevantDocs.forEach(doc => {
+          if (doc.revealedIndices && Array.isArray(doc.revealedIndices)) {
+            doc.revealedIndices.forEach(idx => allRevealed.add(idx));
+          }
+        });
+        return allRevealed;
+      };
 
       if (loading) return null;
 
@@ -751,9 +851,18 @@
                       </div>
                     ) : (
                       <div className="grid grid-cols-4 gap-2 animate-in">
-                         {selectedScratchGame.grid.map((val, i) => (
-                           <ScratchCell key={i} value={val} canScratch={canScratchNow} onRevealed={(v) => handleRevealed(v, selectedScratchGame)} />
-                         ))}
+                         {selectedScratchGame.grid.map((val, i) => {
+                           const isRevealed = currentGameProgress.includes(i);
+                           return (
+                             <ScratchCell 
+                               key={i} 
+                               value={val} 
+                               canScratch={canScratchNow && !isRevealed} 
+                               isRevealed={isRevealed}
+                               onRevealed={(v) => handleRevealed(v, selectedScratchGame, i)} 
+                             />
+                           );
+                         })}
                       </div>
                     )}
                   </div>
@@ -799,14 +908,14 @@
                 <div className="space-y-4">
                   <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2"><Icon name="History" size={14} className="text-sky-500"/> 點數收支存摺</h3>
                   <div className="bg-white rounded-[25px] border border-slate-100 shadow-sm overflow-hidden">
-                    {submissions.filter(s => ['approved', 'deducted', 'redeemed', 'scratch', 'checkin'].includes(s.status)).length === 0 ? <p className="text-center text-[11px] text-slate-300 py-10 italic">尚無明細</p> : (
+                    {submissions.filter(s => ['approved', 'deducted', 'redeemed', 'scratch', 'checkin', 'bonus'].includes(s.status)).length === 0 ? <p className="text-center text-[11px] text-slate-300 py-10 italic">尚無明細</p> : (
                       <div className="flex flex-col">
-                        {submissions.filter(s => ['approved', 'deducted', 'redeemed', 'scratch', 'checkin'].includes(s.status)).map(item => (
+                        {submissions.filter(s => ['approved', 'deducted', 'redeemed', 'scratch', 'checkin', 'bonus'].includes(s.status)).map(item => (
                           <div key={item.id} className="log-item p-4 flex justify-between items-center bg-white">
                             <div className="flex flex-col min-w-0">
                               <span className="text-[9px] text-slate-300 font-bold uppercase">{item.timestamp ? new Date(item.timestamp.seconds * 1000).toLocaleDateString() : '剛剛'}</span>
                               <p className="text-xs font-medium text-slate-600 truncate pr-2">
-                                {item.description.replace('🎁 已兌換：', '兌換: ').replace('⚠️ 扣點：', '扣點: ').replace('🎲 參加', '活動: ').replace('🎁 刮刮樂中獎：', '中獎: ')}
+                                {item.description.replace('🎁 已兌換：', '兌換: ').replace('⚠️ 扣點：', '扣點: ').replace('🎲 參加', '活動: ').replace('🎁 刮刮樂中獎：', '中獎: ').replace('🎁 系統補給：', '補給: ')}
                               </p>
                             </div>
                             <div className={`text-sm font-bold shrink-0 ${item.awardedPoints > 0 ? 'text-emerald-500' : 'text-red-400'}`}>
@@ -821,177 +930,146 @@
               </div>
             )}
 
-            {/* 兌換分頁 */}
-            {activeTab === 'rewards' && (
-              <div className="space-y-6 animate-in">
-                <div className="bg-white p-6 rounded-[35px] border border-slate-100 shadow-sm relative overflow-hidden group">
-                  <Icon name="Sparkles" className="absolute top-2 right-2 text-sky-50 group-hover:rotate-12 transition-transform" size={80} />
-                  <h2 className="font-bold text-lg mb-1 flex items-center gap-2 text-slate-800">許願池 ✨</h2>
-                  <p className="text-xs text-slate-500 mb-5 font-medium">想要什麼新商品嗎？拍下來告訴店長吧！</p>
-                  {!showWishForm ? (
-                    <button onClick={() => setShowWishForm(true)} className="btn-action px-6 py-3 text-xs font-bold shadow-md w-full sm:w-auto">裝進清單 +</button>
-                  ) : (
-                    <div className="space-y-4 animate-in slide-in-from-top duration-300">
-                      <input className="w-full bg-slate-50 border border-slate-100 rounded-xl p-4 text-slate-700 text-sm outline-none focus:ring-1 focus:ring-sky-200" placeholder="想換什麼？" value={wishName} onChange={(e) => setWishName(e.target.value)} />
-                      <label className="flex items-center justify-center py-5 rounded-xl bg-slate-50 border border-slate-100 border-dashed cursor-pointer hover:bg-slate-100 transition-all">
-                        <Icon name="Camera" size={20} className="mr-2 text-slate-400"/><span className="text-xs font-bold text-slate-400">{wishImage ? '已選好圖' : '上傳參考圖'}</span><input type="file" accept="image/*" className="hidden" onChange={(e) => setWishImage(e.target.files[0])} /></label>
-                      <div className="flex gap-2"><button onClick={() => setShowWishForm(false)} className="flex-1 text-xs font-bold py-3.5 bg-slate-50 text-slate-400 rounded-xl">取消</button><button onClick={handleMakeWish} className="flex-1 text-xs font-bold py-3.5 btn-action shadow-lg">送出願望</button></div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <h2 className="font-bold text-slate-800 text-lg flex gap-2 items-center px-1 mb-2"><Icon name="Store" className="text-sky-500" size={20}/> 店內現貨</h2>
-                  {rewards.filter(r => r.available).map(r => (
-                    <div key={r.id} className="bg-white banner-card border border-slate-100 shadow-md flex h-36 group overflow-hidden transition-all hover:shadow-lg relative">
-                      {isAdmin && (
-                        <button onClick={() => deleteItem('rewards', r.id, r.name)} className="absolute top-2 right-2 z-20 bg-white/80 backdrop-blur-md p-2 rounded-full text-slate-200 hover:text-red-500 transition-all"><Icon name="Trash2" size={14}/></button>
-                      )}
-                      <div className="w-2/5 bg-slate-50 relative shrink-0 overflow-hidden rounded-[16px] m-3 shadow-inner">
-                        {r.image && <img src={r.image} className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110`} />}
-                      </div>
-                      <div className="flex-1 p-5 pl-2 flex flex-col justify-between min-w-0 bg-white">
-                        <div><h4 className="text-sm font-bold text-slate-700 truncate pr-6 leading-tight">{r.name}</h4>{r.available && <p className="text-[10px] text-sky-500 font-bold mt-1 uppercase tracking-widest">{r.cost} P Needs</p>}</div>
-                        <button onClick={() => r.available && handleRedeem(r)} disabled={!r.available || points < Number(r.cost)} className={`w-full py-2.5 rounded-xl text-[10px] font-bold transition-all ${r.available && points >= Number(r.cost) ? 'btn-action shadow-md shadow-sky-50' : 'bg-slate-50 text-slate-300'}`}>{r.available ? (points >= Number(r.cost) ? '立即兌換' : '點數不足') : '等候定價'}</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* 管理分頁 */}
             {activeTab === 'admin' && isAdmin && (
               <div className="space-y-6 pb-10 animate-in">
-                <div className="premium-blue-gradient p-6 rounded-[30px] text-white shadow-lg relative overflow-hidden">
-                  <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12"><Icon name="Chart" size={120}/></div>
-                  <h2 className="text-sm font-bold flex gap-2 items-center mb-4"><Icon name="Chart" size={18}/> 營運報表統計</h2>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="glass-card p-4 rounded-2xl">
-                      <p className="text-[9px] font-bold text-sky-200 uppercase tracking-widest mb-1">累積發行</p>
-                      <p className="text-2xl font-bold">{stats.totalIssued}</p>
-                    </div>
-                    <div className="glass-card p-4 rounded-2xl">
-                      <p className="text-[9px] font-bold text-sky-200 uppercase tracking-widest mb-1">累積回收</p>
-                      <p className="text-2xl font-bold">{stats.totalRedeemed}</p>
-                    </div>
-                  </div>
-                  <button onClick={updateAnnounce} className="w-full mt-4 bg-white/20 py-2 rounded-xl text-[10px] font-bold">修改門市跑馬燈</button>
-                </div>
-
-                <div className="bg-white p-7 rounded-[35px] border-2 border-sky-100 shadow-lg shadow-sky-500/5 space-y-4">
-                  <h3 className="font-bold text-sky-800 mb-2 flex gap-2 items-center text-sm"><Icon name="Ticket" size={18}/> 建立格子樂活動</h3>
-                  <div className="space-y-3">
-                    <input className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="活動標題 (如：週末大放送)" value={adminScratchTitle} onChange={(e) => setAdminScratchTitle(e.target.value)} />
-                    <div className="flex gap-2">
-                      <input className="w-1/2 bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="大獎名稱" value={adminScratchPrize} onChange={(e) => setAdminScratchPrize(e.target.value)} />
-                      <input type="number" className="w-1/2 bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="每次遊玩點數" value={adminScratchCost} onChange={(e) => setAdminScratchCost(e.target.value)} />
-                    </div>
-                    <input type="number" className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="中獎數字 (1-16)" value={adminScratchTarget} onChange={(e) => setAdminScratchTarget(e.target.value)} />
-                    
-                    <label className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-100 rounded-xl cursor-pointer">
-                      <Icon name="Image" size={16} className="text-slate-400"/>
-                      <span className="text-xs text-slate-400">{adminScratchImage ? '已選擇封面圖' : '上傳活動封面'}</span>
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => setAdminScratchImage(e.target.files[0])} />
-                    </label>
-
-                    <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase tracking-widest">設定中獎位置 (點擊下方):</p>
-                    <div className="grid grid-cols-4 gap-2">
-                       {Array(16).fill(0).map((_, i) => (
-                         <button key={i} onClick={() => setAdminScratchWinnerIndex(i)} className={`aspect-square rounded-lg border-2 text-xs font-bold transition-all ${adminScratchWinnerIndex === i ? 'bg-sky-500 border-sky-600 text-white' : 'bg-slate-50 border-slate-100 text-slate-300'}`}>#{i+1}</button>
-                       ))}
-                    </div>
-                    <button onClick={handleAddScratchActivity} disabled={isAddingReward} className="w-full py-4 btn-action font-bold text-xs shadow-lg mt-2">{isAddingReward ? '發布中...' : '發布活動'}</button>
-                  
-                    <div className="border-t border-slate-100 pt-4 mt-4">
-                      <p className="text-[10px] text-slate-400 font-bold mb-2">已發布的活動:</p>
-                      {scratchActivities.map(game => (
-                        <div key={game.id} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl mb-2">
-                          <span className="text-xs font-bold text-slate-600">{game.title}</span>
-                          <button onClick={() => deleteItem('scratch_activities', game.id, game.title)} className="text-slate-300 hover:text-red-500"><Icon name="Trash2" size={14}/></button>
+                {!adminMonitoringGame ? (
+                  <>
+                    <div className="premium-blue-gradient p-6 rounded-[30px] text-white shadow-lg relative overflow-hidden">
+                      <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12"><Icon name="Chart" size={120}/></div>
+                      <h2 className="text-sm font-bold flex gap-2 items-center mb-4"><Icon name="Chart" size={18}/> 營運報表統計</h2>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="glass-card p-4 rounded-2xl">
+                          <p className="text-[9px] font-bold text-sky-200 uppercase tracking-widest mb-1">累積發行</p>
+                          <p className="text-2xl font-bold">{stats.totalIssued}</p>
                         </div>
-                      ))}
+                        <div className="glass-card p-4 rounded-2xl">
+                          <p className="text-[9px] font-bold text-sky-200 uppercase tracking-widest mb-1">累積回收</p>
+                          <p className="text-2xl font-bold">{stats.totalRedeemed}</p>
+                        </div>
+                      </div>
+                      <button onClick={updateAnnounce} className="w-full mt-4 bg-white/20 py-2 rounded-xl text-[10px] font-bold">修改門市跑馬燈</button>
                     </div>
-                  </div>
-                </div>
 
-                <div className="bg-white p-7 rounded-[35px] border-2 border-red-50 shadow-xl shadow-red-500/5 space-y-4">
-                  <h3 className="font-bold text-red-500 mb-4 flex gap-2 items-center text-sm"><Icon name="Alert" size={18}/> 罰點專區</h3>
-                  <div className="space-y-4">
-                    <input className="w-full bg-red-50/30 border-none rounded-[15px] p-4 text-sm font-light outline-none focus:ring-1 focus:ring-red-200" placeholder="扣分原因" value={penaltyDesc} onChange={(e) => setPenaltyDesc(e.target.value)} />
-                    <input type="number" className="w-full bg-red-50/30 border-none rounded-[15px] p-4 text-sm font-light outline-none focus:ring-1 focus:ring-red-200" placeholder="點數" value={penaltyAmount} onChange={(e) => setPenaltyAmount(e.target.value)} />
-                    <button onClick={handleDeductPoints} className="w-full py-4 bg-red-500 text-white rounded-[15px] font-bold text-xs shadow-lg active:scale-95">確認扣點 😤</button>
-                  </div>
-                </div>
+                    {/* 新增: 直接給點 */}
+                    <div className="bg-white p-7 rounded-[35px] border-2 border-emerald-100 shadow-xl shadow-emerald-500/5 space-y-4">
+                      <h3 className="font-bold text-emerald-600 mb-4 flex gap-2 items-center text-sm"><Icon name="Gift" size={18}/> 直接給予獎勵</h3>
+                      <div className="space-y-4">
+                        <input className="w-full bg-emerald-50/30 border-none rounded-[15px] p-4 text-sm font-light outline-none focus:ring-1 focus:ring-emerald-200" placeholder="獎勵原因" value={givePointsReason} onChange={(e) => setGivePointsReason(e.target.value)} />
+                        <input type="number" className="w-full bg-emerald-50/30 border-none rounded-[15px] p-4 text-sm font-light outline-none focus:ring-1 focus:ring-emerald-200" placeholder="發送點數" value={givePointsAmount} onChange={(e) => setGivePointsAmount(e.target.value)} />
+                        <button onClick={handleGivePoints} className="w-full py-4 bg-emerald-500 text-white rounded-[15px] font-bold text-xs shadow-lg active:scale-95">確認發送 ✨</button>
+                      </div>
+                    </div>
 
-                <div className="bg-white p-7 rounded-[35px] border-2 border-indigo-100 shadow-xl shadow-indigo-500/5 space-y-4">
-                  <h3 className="font-bold text-indigo-600 mb-4 flex gap-2 items-center text-sm"><Icon name="Sparkles" size={18}/> 願望定價中心</h3>
-                  <div className="space-y-3">
-                    {rewards.filter(r => !r.available).map(wish => (
-                      <div key={wish.id} className="flex items-center gap-4 p-3 bg-indigo-50/30 rounded-2xl border border-indigo-50">
-                        <div className="w-12 h-12 rounded-lg bg-white overflow-hidden shrink-0 shadow-sm">{wish.image && <img src={wish.image} className="w-full h-full object-cover"/>}</div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-slate-700 truncate">{wish.name}</p>
-                          {pricingId === wish.id ? (
-                            <div className="flex gap-2 mt-2">
-                              <input type="number" className="w-20 border border-indigo-200 rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-indigo-400 bg-white" placeholder="點數" value={pricingCost} onChange={(e) => setPricingCost(e.target.value)} autoFocus />
-                              <button onClick={() => handlePriceWish(wish)} className="bg-indigo-500 text-white p-1.5 rounded-lg shadow-md"><Icon name="Check" size={14}/></button>
-                              <button onClick={() => setPricingId(null)} className="bg-slate-100 text-slate-400 p-1.5 rounded-lg"><Icon name="XCircle" size={16}/></button>
+                    <div className="bg-white p-7 rounded-[35px] border-2 border-sky-100 shadow-lg shadow-sky-500/5 space-y-4">
+                      <h3 className="font-bold text-sky-800 mb-2 flex gap-2 items-center text-sm"><Icon name="Ticket" size={18}/> 建立格子樂活動</h3>
+                      <div className="space-y-3">
+                        <input className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="活動標題 (如：週末大放送)" value={adminScratchTitle} onChange={(e) => setAdminScratchTitle(e.target.value)} />
+                        <div className="flex gap-2">
+                          <input className="w-1/2 bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="大獎名稱" value={adminScratchPrize} onChange={(e) => setAdminScratchPrize(e.target.value)} />
+                          <input type="number" className="w-1/2 bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="每次遊玩點數" value={adminScratchCost} onChange={(e) => setAdminScratchCost(e.target.value)} />
+                        </div>
+                        <input type="number" className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="中獎數字 (1-16)" value={adminScratchTarget} onChange={(e) => setAdminScratchTarget(e.target.value)} />
+                        
+                        <label className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-100 rounded-xl cursor-pointer">
+                          <Icon name="Image" size={16} className="text-slate-400"/>
+                          <span className="text-xs text-slate-400">{adminScratchImage ? '已選擇封面圖' : '上傳活動封面'}</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => setAdminScratchImage(e.target.files[0])} />
+                        </label>
+
+                        <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase tracking-widest">設定中獎位置 (點擊下方):</p>
+                        <div className="grid grid-cols-4 gap-2">
+                           {Array(16).fill(0).map((_, i) => (
+                             <button key={i} onClick={() => setAdminScratchWinnerIndex(i)} className={`aspect-square rounded-lg border-2 text-xs font-bold transition-all ${adminScratchWinnerIndex === i ? 'bg-sky-500 border-sky-600 text-white' : 'bg-slate-50 border-slate-100 text-slate-300'}`}>#{i+1}</button>
+                           ))}
+                        </div>
+                        <button onClick={handleAddScratchActivity} disabled={isAddingReward} className="w-full py-4 btn-action font-bold text-xs shadow-lg mt-2">{isAddingReward ? '發布中...' : '發布活動'}</button>
+                      
+                        <div className="border-t border-slate-100 pt-4 mt-4">
+                          <p className="text-[10px] text-slate-400 font-bold mb-2">已發布的活動:</p>
+                          {scratchActivities.map(game => (
+                            <div key={game.id} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl mb-2">
+                              <span className="text-xs font-bold text-slate-600 truncate flex-1 mr-2">{game.title}</span>
+                              <div className="flex gap-2">
+                                <button onClick={() => setAdminMonitoringGame(game)} className="text-sky-500 bg-sky-50 px-2 py-1 rounded-md text-[10px] font-bold flex items-center gap-1"><Icon name="Eye" size={12}/> 監控</button>
+                                <button onClick={() => deleteItem('scratch_activities', game.id, game.title)} className="text-slate-300 hover:text-red-500"><Icon name="Trash2" size={14}/></button>
+                              </div>
                             </div>
-                          ) : (
-                            <button onClick={() => {setPricingId(wish.id); setPricingCost('');}} className="text-[10px] text-indigo-500 font-bold mt-1 underline italic">設定點數並上架</button>
-                          )}
+                          ))}
                         </div>
-                        <button onClick={() => deleteItem('rewards', wish.id, wish.name)} className="text-slate-300 hover:text-red-400"><Icon name="Trash2" size={16}/></button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-[9px] font-bold text-slate-400 px-3 uppercase tracking-[0.2em]">待核准賺點回報</h3>
-                  {submissions.filter(s => s.status === 'pending').map(sub => (
-                    <div key={sub.id} className="bg-white p-6 rounded-[30px] border border-slate-200 shadow-sm">
-                      {sub.image && <div className="w-full h-44 mb-5 overflow-hidden rounded-[20px] bg-slate-50 border border-slate-100 shadow-inner"><img src={sub.image} className="w-full h-full object-cover" /></div>}
-                      <p className="text-sm font-bold text-slate-700 mb-6 text-center italic">「{sub.description}」</p>
-                      <div className="flex items-center gap-4 mb-6 bg-slate-50 p-4 rounded-[20px]">
-                        <span className="text-xs font-bold text-slate-400 shrink-0">發放點數:</span>
-                        <input type="number" className="w-full bg-white border-none rounded-xl px-4 py-2 text-sm font-bold text-sky-600 outline-none focus:ring-1 focus:ring-sky-200 shadow-inner" placeholder="10" value={approvalPoints[sub.id] || ''} onChange={(e) => setApprovalPoints({ ...approvalPoints, [sub.id]: e.target.value })} />
-                      </div>
-                      <div className="flex gap-3">
-                        <button onClick={() => deleteItem('submissions', sub.id, sub.description)} className="flex-1 py-3 bg-slate-100 text-slate-300 rounded-[18px] text-[10px] font-bold">拒絕</button>
-                        <button onClick={() => handleApprove(sub, approvalPoints[sub.id] || 10)} className="flex-[2.5] premium-blue-gradient text-white py-3 rounded-[18px] text-[10px] font-bold tracking-widest shadow-lg">發放</button>
                       </div>
                     </div>
-                  ))}
-                </div>
 
-                <div className="space-y-4">
-                  <h3 className="text-[9px] font-bold text-slate-400 px-3 uppercase tracking-[0.2em]">待核銷兌換券</h3>
-                  <div className="bg-white rounded-[30px] border border-slate-100 p-4 space-y-3 shadow-sm">
-                    {submissions.filter(s => s.status === 'redeemed').map(coupon => (
-                       <div key={coupon.id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                          <div className="w-10 h-10 rounded-lg bg-sky-100 overflow-hidden shrink-0 shadow-inner"><img src={coupon.image} className="w-full h-full object-cover"/></div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-slate-600 truncate">{coupon.description.replace('🎁 已兌換：', '')}</p>
+                    <div className="bg-white p-7 rounded-[35px] border-2 border-red-50 shadow-xl shadow-red-500/5 space-y-4">
+                      <h3 className="font-bold text-red-500 mb-4 flex gap-2 items-center text-sm"><Icon name="Alert" size={18}/> 罰點專區</h3>
+                      <div className="space-y-4">
+                        <input className="w-full bg-red-50/30 border-none rounded-[15px] p-4 text-sm font-light outline-none focus:ring-1 focus:ring-red-200" placeholder="扣分原因" value={penaltyDesc} onChange={(e) => setPenaltyDesc(e.target.value)} />
+                        <input type="number" className="w-full bg-red-50/30 border-none rounded-[15px] p-4 text-sm font-light outline-none focus:ring-1 focus:ring-red-200" placeholder="點數" value={penaltyAmount} onChange={(e) => setPenaltyAmount(e.target.value)} />
+                        <button onClick={handleDeductPoints} className="w-full py-4 bg-red-500 text-white rounded-[15px] font-bold text-xs shadow-lg active:scale-95">確認扣點 😤</button>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-7 rounded-[35px] border-2 border-indigo-100 shadow-xl shadow-indigo-500/5 space-y-4">
+                      <h3 className="font-bold text-indigo-600 mb-4 flex gap-2 items-center text-sm"><Icon name="Sparkles" size={18}/> 願望定價中心</h3>
+                      <div className="space-y-3">
+                        {rewards.filter(r => !r.available).map(wish => (
+                          <div key={wish.id} className="flex items-center gap-4 p-3 bg-indigo-50/30 rounded-2xl border border-indigo-50">
+                            <div className="w-12 h-12 rounded-lg bg-white overflow-hidden shrink-0 shadow-sm">{wish.image && <img src={wish.image} className="w-full h-full object-cover"/>}</div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-slate-700 truncate">{wish.name}</p>
+                              {pricingId === wish.id ? (
+                                <div className="flex gap-2 mt-2">
+                                  <input type="number" className="w-20 border border-indigo-200 rounded-lg p-1.5 text-xs outline-none focus:ring-1 focus:ring-indigo-400 bg-white" placeholder="點數" value={pricingCost} onChange={(e) => setPricingCost(e.target.value)} autoFocus />
+                                  <button onClick={() => handlePriceWish(wish)} className="bg-indigo-500 text-white p-1.5 rounded-lg shadow-md"><Icon name="Check" size={14}/></button>
+                                  <button onClick={() => setPricingId(null)} className="bg-slate-100 text-slate-400 p-1.5 rounded-lg"><Icon name="XCircle" size={16}/></button>
+                                </div>
+                              ) : (
+                                <button onClick={() => {setPricingId(wish.id); setPricingCost('');}} className="text-[10px] text-indigo-500 font-bold mt-1 underline italic">設定點數並上架</button>
+                              )}
+                            </div>
+                            <button onClick={() => deleteItem('rewards', wish.id, wish.name)} className="text-slate-300 hover:text-red-400"><Icon name="Trash2" size={16}/></button>
                           </div>
-                          <button onClick={() => handleVerifyCoupon(coupon.id)} className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-bold active:scale-95 flex items-center gap-1 shadow-sm">
-                            <Icon name="Check" size={12}/> 核銷
-                          </button>
-                       </div>
-                    ))}
-                  </div>
-                </div>
+                        ))}
+                      </div>
+                    </div>
 
-                <div className="bg-white p-7 rounded-[35px] border border-slate-200 space-y-4 shadow-sm">
-                  <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2"><Icon name="Plus" size={18} className="text-sky-300"/> 直接上架商品</h3>
-                  <div className="space-y-4">
-                    <input className="w-full bg-slate-50 border-none rounded-[15px] p-4 text-sm font-light outline-none focus:ring-1 focus:ring-sky-100" placeholder="名稱" value={adminRewardName} onChange={(e) => setAdminRewardName(e.target.value)} />
-                    <input type="number" className="w-full bg-slate-50 border-none rounded-[15px] p-4 text-sm font-light outline-none focus:ring-1 focus:ring-sky-100" placeholder="點數" value={adminRewardCost} onChange={(e) => setAdminRewardCost(e.target.value)} />
-                    <input type="file" accept="image/*" className="text-[10px] block w-full text-slate-300 font-light" onChange={(e) => setAdminRewardImage(e.target.files[0])} />
-                    <button onClick={handleAddRewardByAdmin} className="w-full py-3.5 btn-action rounded-[15px] font-bold text-xs shadow-lg">確認上架</button>
+                    <div className="bg-white p-7 rounded-[35px] border border-slate-200 space-y-4 shadow-sm">
+                      <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2"><Icon name="Plus" size={18} className="text-sky-300"/> 直接上架商品</h3>
+                      <div className="space-y-4">
+                        <input className="w-full bg-slate-50 border-none rounded-[15px] p-4 text-sm font-light outline-none focus:ring-1 focus:ring-sky-100" placeholder="名稱" value={adminRewardName} onChange={(e) => setAdminRewardName(e.target.value)} />
+                        <input type="number" className="w-full bg-slate-50 border-none rounded-[15px] p-4 text-sm font-light outline-none focus:ring-1 focus:ring-sky-100" placeholder="點數" value={adminRewardCost} onChange={(e) => setAdminRewardCost(e.target.value)} />
+                        <input type="file" accept="image/*" className="text-[10px] block w-full text-slate-300 font-light" onChange={(e) => setAdminRewardImage(e.target.files[0])} />
+                        <button onClick={handleAddRewardByAdmin} className="w-full py-3.5 btn-action rounded-[15px] font-bold text-xs shadow-lg">確認上架</button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  // Admin Monitoring View
+                  <div className="bg-white p-6 rounded-[35px] border-2 border-sky-100 shadow-xl shadow-sky-500/5 animate-in">
+                    <button onClick={() => setAdminMonitoringGame(null)} className="mb-4 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold"><span className="mr-1"><Icon name="ArrowLeft" size={14}/></span> 返回後台</button>
+                    
+                    <div className="text-center mb-6">
+                      <h2 className="font-bold text-slate-800 text-lg mb-1">{adminMonitoringGame.title} - 即時監控</h2>
+                      <p className="text-xs text-slate-400">大獎：{adminMonitoringGame.prize} (目標: {adminMonitoringGame.target})</p>
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-2 animate-in">
+                       {adminMonitoringGame.grid.map((val, i) => {
+                         const revealedSet = getRevealedCellsForGame(adminMonitoringGame.id);
+                         const isRevealed = revealedSet.has(i);
+                         return (
+                           <div key={i} className={`aspect-square rounded-xl border-2 flex items-center justify-center font-bold text-lg transition-all ${isRevealed ? 'bg-sky-50 border-sky-200 text-sky-600' : 'bg-slate-100 border-slate-200 text-slate-300'}`}>
+                             {isRevealed ? val : '?'}
+                           </div>
+                         );
+                       })}
+                    </div>
+                    
+                    <div className="mt-4 p-3 bg-slate-50 rounded-xl text-center">
+                      <p className="text-xs text-slate-500">已刮開 {getRevealedCellsForGame(adminMonitoringGame.id).size} / 16 格</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>
