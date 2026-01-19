@@ -81,6 +81,8 @@
     .marquee { white-space: nowrap; overflow: hidden; box-sizing: border-box; }
     .marquee span { display: inline-block; padding-left: 100%; animation: marquee 25s linear infinite; }
     @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+
+    /* Animations */
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(1800deg); } }
     @keyframes bounce-hand { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     .animate-bounce-hand { animation: bounce-hand 0.5s ease-in-out infinite; }
@@ -111,6 +113,10 @@
         outline: none;
         transition: all 0.2s;
         color: #334155;
+    }
+    .settings-input:focus {
+        border-color: #94a3b8;
+        box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.1);
     }
     .settings-label {
         font-size: 10px;
@@ -161,7 +167,6 @@
       const auth = getAuth(app);
       const db = getFirestore(app);
 
-      // CRITICAL FIX: Added onAuthStateChanged and other auth functions to window.fb
       window.fb = { 
         db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, 
         increment, serverTimestamp, deleteDoc, arrayUnion, getDoc, 
@@ -219,6 +224,7 @@
         PiggyBank: (<Fragment><path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5c-3 3-5 3-5 3s-0.5-2.3 3-5l2.5-2.5c1-1 2.5-1.5 4-1.5 2.5 0 4.8 1.5 5.8 3.5H19z"/><path d="M19 5h-1"/><path d="M22 9c0 5-4 9-9 9s-9-4-9-9c0-3.3 2-6.2 4.9-7.9l0.9 0.9C7.5 3.1 6 5.4 6 8c0 3.3 2.7 6 6 6s6-2.7 6-6c0-2-0.8-3.8-2.2-5l0.7-0.7c3.1 1.7 5.5 5 5.5 6.7z"/></Fragment>),
         Sparkles: (<Fragment><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M9 3v4M3 5h4M3 9h4"/></Fragment>),
         Edit: (<Fragment><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></Fragment>),
+        ArrowLeft: (<Fragment><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></Fragment>),
       };
       return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name] || null}</svg>;
     };
@@ -495,6 +501,8 @@
           return { streak: checkins.length, total: totalEarned };
       }, [submissions, user]);
 
+      if (loading) return null;
+
       return (
         <div className="max-w-md mx-auto shadow-2xl relative min-h-screen pb-24 sm:rounded-[40px] sm:my-4 sm:border-4 sm:border-slate-200 bg-[#f8fafc] overflow-hidden flex flex-col no-scrollbar">
           
@@ -507,7 +515,7 @@
               </div>
             </div>
             <div className="flex justify-center mb-6"><div className="point-card px-10 py-4 rounded-2xl flex flex-col items-center min-w-[200px]"><span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">目前點數</span><span className="text-5xl font-bold text-white tracking-tight drop-shadow-lg">{points}</span></div></div>
-            <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 marquee mx-2 backdrop-blur-md"><span className="text-[11px] font-light text-slate-300 uppercase tracking-wide">{announcement}</span></div>
+            <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 marquee mx-2 backdrop-blur-md"><span className="text-[11px] font-light text-slate-300">{announcement}</span></div>
             {showAdminLogin && !isAdmin && <div className="absolute top-24 right-6 bg-white p-6 rounded-2xl shadow-2xl z-50 w-64 text-slate-800 border animate-in"><input type="password" placeholder="Passcode" className="w-full bg-slate-50 border p-3 rounded-xl mb-3 text-center tracking-widest outline-none text-sm" value={adminPass} onChange={e => setAdminPass(e.target.value)} autoFocus /><button onClick={checkAdmin} className="w-full btn-luxury py-3 rounded-xl font-bold text-xs uppercase tracking-widest">Verify Access</button></div>}
           </div>
 
