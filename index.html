@@ -12,10 +12,6 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   
-  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-
   <style>
     * { font-family: 'M PLUS Rounded 1c', sans-serif !important; }
     
@@ -121,40 +117,43 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBAizT0ijN3-uxegV4w2HX6VFvXvYndc3c",
-      authDomain: "change-389a0.firebaseapp.com",
-      projectId: "change-389a0",
-      storageBucket: "change-389a0.firebasestorage.app",
-      messagingSenderId: "360528719647",
-      appId: "1:360528719647:web:474055ac8fb26e370c0a2a"
-    };
-
+    // 使用環境提供的配置
+    const firebaseConfig = JSON.parse(__firebase_config);
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
-    const finalAppId = "love-sync-v1"; 
+    // 使用環境提供的 App ID
+    const finalAppId = typeof __app_id !== 'undefined' ? __app_id : "default-app"; 
 
+    // 將 Firebase 功能掛載到 window 以供 Babel 轉譯後的 React 使用
     window.fb = { 
       db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, 
       increment, serverTimestamp, deleteDoc, appId: finalAppId, 
-      signInAnonymously, onAuthStateChanged 
+      signInAnonymously, onAuthStateChanged, signInWithCustomToken
     };
+    
+    // 預設初始化登入
+    (async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+           await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+           await signInAnonymously(auth);
+        }
+      } catch (e) {
+        console.error("Auth init failed", e);
+      }
+    })();
   </script>
 
   <script type="text/babel">
     const { useState, useEffect, useRef, Fragment } = React;
-    const { 
-      db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, 
-      increment, serverTimestamp, deleteDoc, appId,
-      signInAnonymously, onAuthStateChanged 
-    } = window.fb;
 
-    // --- 圖示元件 ---
+    // --- 圖示元件 (保持原樣) ---
     const Icon = ({ name, size = 24, className = "" }) => {
       const icons = {
         Point: <path d="M6 2L3 6V20A2 2 0 0 0 5 22H19A2 2 0 0 0 21 20V6L18 2H6ZM3 6H21M16 10A4 4 0 0 1 8 10" />,
@@ -164,7 +163,7 @@
         Lock: (<Fragment><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></Fragment>),
         LogOut: (<Fragment><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></Fragment>),
         Trash2: (<Fragment><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></Fragment>),
-        Ticket: (<Fragment><path d="M2 9V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 0 0 4v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 0 0-4Z"/><path d="M13 3v18M9 3v18M15 3v18"/></Fragment>),
+        Ticket: (<Fragment><path d="M2 9V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2-2v4a2 2 0 0 0 0 4v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 0 0-4Z"/><path d="M13 3v18M9 3v18M15 3v18"/></Fragment>),
         Store: (<Fragment><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></Fragment>),
         Chart: (<Fragment><path d="M12 20V10M18 20V4M6 20v-4"/></Fragment>),
         Check: <polyline points="20 6 9 17 4 12"/>,
@@ -175,7 +174,8 @@
         Plus: (<Fragment><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Fragment>),
         Dice: (<Fragment><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/></Fragment>),
         Calendar: (<Fragment><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></Fragment>),
-        XCircle: (<Fragment><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></Fragment>)
+        XCircle: (<Fragment><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></Fragment>),
+        ArrowLeft: (<Fragment><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></Fragment>)
       };
       return (
         <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -260,6 +260,12 @@
     };
 
     function App() {
+      const { 
+        db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, 
+        increment, serverTimestamp, deleteDoc, appId,
+        signInAnonymously, onAuthStateChanged 
+      } = window.fb;
+
       const [user, setUser] = useState(null);
       const [activeTab, setActiveTab] = useState('home');
       const [isAdmin, setIsAdmin] = useState(false);
@@ -274,7 +280,6 @@
       const [desc, setDesc] = useState('');
       const [selectedFile, setSelectedFile] = useState(null);
       const [isUploading, setIsUploading] = useState(false);
-      const [isProcessing, setIsProcessing] = useState(false);
       const [adminPass, setAdminPass] = useState('');
       const [showAdminLogin, setShowAdminLogin] = useState(false);
 
@@ -283,6 +288,7 @@
       const [showWishForm, setShowWishForm] = useState(false);
       const [isWishing, setIsWishing] = useState(false);
 
+      // Admin & Shop States
       const [adminRewardName, setAdminRewardName] = useState('');
       const [adminRewardCost, setAdminRewardCost] = useState('');
       const [adminRewardImage, setAdminRewardImage] = useState(null);
@@ -290,22 +296,29 @@
       const [approvalPoints, setApprovalPoints] = useState({});
       const [penaltyDesc, setPenaltyDesc] = useState('');
       const [penaltyAmount, setPenaltyAmount] = useState('');
-      
       const [pricingId, setPricingId] = useState(null);
       const [pricingCost, setPricingCost] = useState('');
 
-      // 刮刮卡狀態
-      const [scratchConfig, setScratchConfig] = useState(null);
+      // New Scratch States
+      const [scratchActivities, setScratchActivities] = useState([]);
+      const [selectedScratchGame, setSelectedScratchGame] = useState(null); // The game object currently being played
       const [canScratchNow, setCanScratchNow] = useState(false);
+      
+      // Admin Scratch Inputs
+      const [adminScratchTitle, setAdminScratchTitle] = useState('');
+      const [adminScratchCost, setAdminScratchCost] = useState('');
       const [adminScratchPrize, setAdminScratchPrize] = useState('');
       const [adminScratchTarget, setAdminScratchTarget] = useState('');
       const [adminScratchWinnerIndex, setAdminScratchWinnerIndex] = useState(null);
+      const [adminScratchImage, setAdminScratchImage] = useState(null);
+
+      // Check-in
       const [isCheckingIn, setIsCheckingIn] = useState(false);
+      const [checkInImage, setCheckInImage] = useState(null);
 
       const getPublicRef = (name) => collection(db, 'artifacts', appId, 'public', 'data', name);
 
       useEffect(() => {
-        signInAnonymously(auth).catch(e => console.error(e));
         return onAuthStateChanged(auth, (u) => {
           if (u) {
             setUser(u);
@@ -316,7 +329,7 @@
             if (rt) rt.classList.add('loaded');
           }
         });
-      }, []);
+      }, [auth]);
 
       useEffect(() => {
         if (!user) return;
@@ -334,8 +347,9 @@
         const unsubRewards = onSnapshot(getPublicRef('rewards'), (s) => {
           setRewards(s.docs.map(d => ({id: d.id, ...d.data()})));
         });
-        const unsubScratch = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'scratch'), (d) => {
-          if(d.exists()) setScratchConfig(d.data());
+        // Listen to new scratch activities collection
+        const unsubScratchActs = onSnapshot(getPublicRef('scratch_activities'), (s) => {
+          setScratchActivities(s.docs.map(d => ({id: d.id, ...d.data()})));
         });
         const unsubAnnounce = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'announce'), (d) => {
           if (d.exists()) setAnnouncement(d.data().text);
@@ -343,8 +357,8 @@
         const unsubNotifs = onSnapshot(getPublicRef('notifications'), (s) => {
           setNotifications(s.docs.map(d => ({id: d.id, ...d.data()})));
         });
-        return () => { unsubStats(); unsubSubs(); unsubRewards(); unsubNotifs(); unsubAnnounce(); unsubScratch(); };
-      }, [user]);
+        return () => { unsubStats(); unsubSubs(); unsubRewards(); unsubNotifs(); unsubAnnounce(); unsubScratchActs(); };
+      }, [user, db, appId]);
 
       const deleteItem = async (colName, id, itemName) => {
         if (!confirm(`確定要刪除「${itemName}」嗎？`)) return;
@@ -372,7 +386,7 @@
             description: desc, image: imgBase64, status: 'pending', timestamp: serverTimestamp(), userId: user.uid
           });
           setDesc(''); setSelectedFile(null); alert("提交成功！");
-        } catch(e){ alert("失敗"); } finally { setIsUploading(false); }
+        } catch(e){ console.error(e); alert("失敗"); } finally { setIsUploading(false); }
       };
 
       const handleApprove = async (sub, customPoints) => {
@@ -437,41 +451,71 @@
       };
 
       const handleCheckIn = async () => {
-        setIsCheckingIn(true);
         const today = new Date().toDateString();
         const hasCheckedIn = submissions.some(s => s.status === 'checkin' && new Date(s.timestamp?.seconds * 1000).toDateString() === today);
-        if (hasCheckedIn) { alert("今天領過囉！"); setIsCheckingIn(false); return; }
+        if (hasCheckedIn) { alert("今天打卡過囉！"); return; }
+        if (!checkInImage) { alert("請先上傳指甲保護照片喔！📸"); return; }
+
+        setIsCheckingIn(true);
         try {
-          await addDoc(getPublicRef('submissions'), { description: "📍 每日打卡領補貼", status: 'checkin', awardedPoints: 5, timestamp: serverTimestamp(), userId: user.uid });
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(5), totalIssued: increment(5) });
-          alert("簽到成功！獲得 5 點 🛒");
-        } catch (e) { alert("失敗"); } finally { setIsCheckingIn(false); }
+          const imgBase64 = await compressImage(checkInImage);
+          await addDoc(getPublicRef('submissions'), { 
+            description: "💅 指甲保護打卡", 
+            image: imgBase64,
+            status: 'checkin', 
+            awardedPoints: 2, 
+            timestamp: serverTimestamp(), 
+            userId: user.uid 
+          });
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(2), totalIssued: increment(2) });
+          alert("打卡成功！獲得 2 點 ✨");
+          setCheckInImage(null);
+        } catch (e) { console.error(e); alert("失敗"); } finally { setIsCheckingIn(false); }
       };
 
-      const handlePayToScratch = async () => {
-        if(points < 50) return alert("點數不足！");
-        if(!scratchConfig || !scratchConfig.isActive) return alert("目前沒有活動喔");
-        if(!confirm('花 50 點玩一次？')) return;
+      const handlePayToScratch = async (game) => {
+        if(points < game.cost) return alert("點數不足！");
+        if(!confirm(`確定花 ${game.cost} 點玩一次「${game.title}」？`)) return;
         try {
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-50), totalRedeemed: increment(50) });
-          await addDoc(getPublicRef('submissions'), { description: "🎲 參與終極密碼格子樂", status: 'scratch', awardedPoints: -50, timestamp: serverTimestamp(), userId: user.uid });
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-game.cost), totalRedeemed: increment(game.cost) });
+          await addDoc(getPublicRef('submissions'), { description: `🎲 參加格子樂：${game.title}`, status: 'scratch', awardedPoints: -game.cost, timestamp: serverTimestamp(), userId: user.uid });
           setCanScratchNow(true);
         } catch(e) { alert("失敗"); }
       };
 
-      const handleRevealed = async (val) => {
+      const handleRevealed = async (val, game) => {
         setCanScratchNow(false);
-        if(String(val) === String(scratchConfig.target)) {
-          alert(`🎉 恭喜中大獎！你刮中了：${scratchConfig.prize}`);
-          await addDoc(getPublicRef('submissions'), { description: `🎁 刮刮樂中獎：${scratchConfig.prize}`, image: "https://placehold.co/400x300/e0f2fe/0ea5e9?text=WINNER", status: 'redeemed', timestamp: serverTimestamp(), userId: user.uid, awardedPoints: 0 });
-        } else { alert(`嗚，是 ${val}... 沒中！💪`); }
+        if(String(val) === String(game.target)) {
+          alert(`🎉 太神啦！恭喜刮中：${game.prize}`);
+          await addDoc(getPublicRef('submissions'), { description: `🎁 刮刮樂中獎：${game.prize} (${game.title})`, image: game.image || "https://placehold.co/400x300/e0f2fe/0ea5e9?text=WINNER", status: 'redeemed', timestamp: serverTimestamp(), userId: user.uid, awardedPoints: 0 });
+        } else { alert(`嗚，是 ${val}... 沒中！再來一次？💪`); }
       };
 
-      const handleSetupScratch = async () => {
-        if(!adminScratchPrize || !adminScratchTarget || adminScratchWinnerIndex === null) return alert("資料不全");
-        const grid = Array(16).fill(0).map((_, i) => i === adminScratchWinnerIndex ? adminScratchTarget : Math.floor(Math.random()*90)+10);
-        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'scratch'), { prize: adminScratchPrize, target: adminScratchTarget, grid: grid, isActive: true, key: Date.now() });
-        alert("格子樂已更新！");
+      const handleAddScratchActivity = async () => {
+        if(!adminScratchTitle || !adminScratchPrize || !adminScratchTarget || adminScratchWinnerIndex === null || !adminScratchCost) return alert("資料不全");
+        
+        setIsAddingReward(true);
+        try {
+          let img = "https://placehold.co/400x300/e0f2fe/0ea5e9?text=Game";
+          if (adminScratchImage) img = await compressImage(adminScratchImage);
+
+          const grid = Array(16).fill(0).map((_, i) => i === adminScratchWinnerIndex ? adminScratchTarget : Math.floor(Math.random()*90)+10);
+          
+          await addDoc(getPublicRef('scratch_activities'), { 
+            title: adminScratchTitle,
+            prize: adminScratchPrize, 
+            cost: parseInt(adminScratchCost),
+            target: adminScratchTarget, 
+            grid: grid, 
+            image: img,
+            isActive: true, 
+            timestamp: serverTimestamp() 
+          });
+          
+          // Reset fields
+          setAdminScratchTitle(''); setAdminScratchPrize(''); setAdminScratchCost(''); setAdminScratchTarget(''); setAdminScratchWinnerIndex(null); setAdminScratchImage(null);
+          alert("格子樂活動發布成功！");
+        } catch(e) { alert("發布失敗"); } finally { setIsAddingReward(false); }
       };
 
       const handleVerifyCoupon = async (couponId) => {
@@ -536,37 +580,76 @@
             {/* 活動分頁 */}
             {activeTab === 'activities' && (
               <div className="space-y-6 animate-in">
-                <div className="bg-white p-6 rounded-[35px] border border-slate-100 shadow-sm flex items-center justify-between group">
-                   <div className="flex items-center gap-4">
-                      <div className="bg-sky-50 p-4 rounded-2xl text-sky-500 group-hover:scale-110 transition-transform"><Icon name="Calendar" size={24}/></div>
-                      <div>
-                        <p className="font-bold text-slate-700 text-sm">每日簽到領補貼</p>
-                        <p className="text-[10px] text-slate-400 font-medium mt-1">天天領 5 點</p>
-                      </div>
-                   </div>
-                   <button onClick={handleCheckIn} disabled={isCheckingIn} className="btn-action px-6 py-2.5 text-xs font-bold shadow-md">簽到</button>
-                </div>
+                {/* 打卡區 */}
+                {!selectedScratchGame ? (
+                  <>
+                    <div className="bg-white p-6 rounded-[35px] border border-slate-100 shadow-sm flex flex-col gap-4">
+                       <div className="flex items-center gap-4">
+                          <div className="bg-rose-50 p-4 rounded-2xl text-rose-500"><Icon name="Sparkles" size={24}/></div>
+                          <div>
+                            <p className="font-bold text-slate-700 text-sm">指甲保護打卡</p>
+                            <p className="text-[10px] text-slate-400 font-medium mt-1">上傳照片證明，領取 2 點</p>
+                          </div>
+                       </div>
+                       
+                       <label className={`w-full py-3 rounded-2xl border-2 border-dashed flex items-center justify-center cursor-pointer transition-colors ${checkInImage ? 'border-rose-300 text-rose-500 bg-rose-50' : 'border-slate-100 text-slate-300 hover:border-slate-200'}`}>
+                          <Icon name="Camera" size={18} className="mr-2"/>
+                          <span className="text-xs font-bold">{checkInImage ? '已選擇照片' : '點擊拍攝/上傳'}</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => setCheckInImage(e.target.files[0])} />
+                       </label>
 
-                {scratchConfig && scratchConfig.isActive ? (
-                  <div className="bg-white p-6 rounded-[35px] border-2 border-sky-100 shadow-xl shadow-sky-500/5">
-                    <h2 className="font-bold text-slate-800 flex items-center gap-2 mb-4"><Icon name="Dice" className="text-sky-500" size={18}/> 終極密碼格子樂 🎲</h2>
-                    <div className="text-[11px] text-slate-500 mb-6 bg-sky-50/50 p-4 rounded-2xl border border-sky-100 border-dashed">
-                       <p className="font-bold text-sky-600 mb-1 flex items-center gap-1"><Icon name="Gift" size={12}/> 本期特賞：{scratchConfig.prize}</p>
-                       <p>玩法：支付 50 點選一格，符合數字 <span className="font-bold text-sky-600 text-lg mx-1">{scratchConfig.target}</span> 即獲獎！</p>
+                       <button onClick={handleCheckIn} disabled={isCheckingIn} className={`btn-action w-full py-3 rounded-xl text-xs font-bold shadow-md transition-all ${!checkInImage ? 'opacity-50 cursor-not-allowed bg-slate-400' : 'bg-rose-400 hover:bg-rose-500'}`}>
+                         {isCheckingIn ? '上傳中...' : '打卡領點數'}
+                       </button>
                     </div>
+
+                    <h3 className="font-bold text-slate-800 flex items-center gap-2 px-2 mt-4"><Icon name="Dice" className="text-sky-500" size={18}/> 選擇格子樂活動</h3>
+                    {scratchActivities.length === 0 ? (
+                      <div className="text-center py-10 bg-white rounded-[35px] border-2 border-dashed border-slate-100 italic text-slate-300 text-xs">
+                         目前沒有進行中的活動 💤
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4">
+                        {scratchActivities.map(game => (
+                          <div key={game.id} onClick={() => setSelectedScratchGame(game)} className="bg-white p-4 rounded-[30px] border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4 cursor-pointer group">
+                             <div className="w-16 h-16 rounded-2xl bg-slate-50 overflow-hidden shrink-0 border border-slate-100">
+                               {game.image && <img src={game.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform"/>}
+                             </div>
+                             <div className="flex-1 min-w-0">
+                               <h4 className="font-bold text-slate-700 text-sm truncate">{game.title}</h4>
+                               <p className="text-[10px] text-slate-400 mt-1">大獎：{game.prize}</p>
+                             </div>
+                             <div className="bg-sky-50 text-sky-600 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap">
+                               {game.cost} 點/次
+                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  // 格子樂遊戲畫面
+                  <div className="bg-white p-6 rounded-[35px] border-2 border-sky-100 shadow-xl shadow-sky-500/5 animate-in">
+                    <button onClick={() => {setSelectedScratchGame(null); setCanScratchNow(false);}} className="mb-4 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold"><span className="mr-1"><Icon name="ArrowLeft" size={14}/></span> 返回列表</button>
+                    
+                    <div className="text-center mb-6">
+                      <h2 className="font-bold text-slate-800 text-lg mb-1">{selectedScratchGame.title}</h2>
+                      <p className="text-xs text-slate-400">花費 {selectedScratchGame.cost} 點，尋找數字 <span className="font-bold text-sky-500 text-sm">{selectedScratchGame.target}</span></p>
+                    </div>
+
                     {!canScratchNow ? (
-                      <button onClick={handlePayToScratch} className="w-full btn-action py-4 font-bold shadow-lg shadow-sky-100 mb-2">支付 50 點開啟刮刮卡</button>
+                      <div className="text-center py-8">
+                        <div className="w-20 h-20 bg-sky-50 rounded-full mx-auto flex items-center justify-center text-sky-500 mb-4 animate-bounce"><Icon name="Lock" size={32}/></div>
+                        <button onClick={() => handlePayToScratch(selectedScratchGame)} className="w-full btn-action py-4 font-bold shadow-lg shadow-sky-100 mb-2">支付 {selectedScratchGame.cost} 點開始</button>
+                        <p className="text-[10px] text-slate-300">支付後點擊任意格子即可</p>
+                      </div>
                     ) : (
                       <div className="grid grid-cols-4 gap-2 animate-in">
-                         {scratchConfig.grid.map((val, i) => (
-                           <ScratchCell key={i} value={val} canScratch={canScratchNow} onRevealed={handleRevealed} />
+                         {selectedScratchGame.grid.map((val, i) => (
+                           <ScratchCell key={i} value={val} canScratch={canScratchNow} onRevealed={(v) => handleRevealed(v, selectedScratchGame)} />
                          ))}
                       </div>
                     )}
-                  </div>
-                ) : (
-                  <div className="text-center py-10 bg-white rounded-[35px] border-2 border-dashed border-slate-100 italic text-slate-300 text-xs">
-                     目前沒有進行中的活動 💤
                   </div>
                 )}
               </div>
@@ -617,7 +700,7 @@
                             <div className="flex flex-col min-w-0">
                               <span className="text-[9px] text-slate-300 font-bold uppercase">{item.timestamp ? new Date(item.timestamp.seconds * 1000).toLocaleDateString() : '剛剛'}</span>
                               <p className="text-xs font-medium text-slate-600 truncate pr-2">
-                                {item.description.replace('🎁 已兌換：', '兌換: ').replace('⚠️ 扣點：', '扣點: ').replace('🎲 參與', '活動: ').replace('🎁 刮刮樂中獎：', '中獎: ')}
+                                {item.description.replace('🎁 已兌換：', '兌換: ').replace('⚠️ 扣點：', '扣點: ').replace('🎲 參加', '活動: ').replace('🎁 刮刮樂中獎：', '中獎: ')}
                               </p>
                             </div>
                             <div className={`text-sm font-bold shrink-0 ${item.awardedPoints > 0 ? 'text-emerald-500' : 'text-red-400'}`}>
@@ -691,16 +774,38 @@
                 </div>
 
                 <div className="bg-white p-7 rounded-[35px] border-2 border-sky-100 shadow-lg shadow-sky-500/5 space-y-4">
-                  <h3 className="font-bold text-sky-800 mb-2 flex gap-2 items-center text-sm"><Icon name="Ticket" size={18}/> 格子樂活動設定 (16格)</h3>
+                  <h3 className="font-bold text-sky-800 mb-2 flex gap-2 items-center text-sm"><Icon name="Ticket" size={18}/> 建立格子樂活動</h3>
                   <div className="space-y-3">
-                    <input className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="獎項名稱" value={adminScratchPrize} onChange={(e) => setAdminScratchPrize(e.target.value)} />
-                    <input type="number" className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="中獎數字" value={adminScratchTarget} onChange={(e) => setAdminScratchTarget(e.target.value)} />
+                    <input className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="活動標題 (如：週末大放送)" value={adminScratchTitle} onChange={(e) => setAdminScratchTitle(e.target.value)} />
+                    <div className="flex gap-2">
+                      <input className="w-1/2 bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="大獎名稱" value={adminScratchPrize} onChange={(e) => setAdminScratchPrize(e.target.value)} />
+                      <input type="number" className="w-1/2 bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="每次遊玩點數" value={adminScratchCost} onChange={(e) => setAdminScratchCost(e.target.value)} />
+                    </div>
+                    <input type="number" className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="中獎數字 (10-99)" value={adminScratchTarget} onChange={(e) => setAdminScratchTarget(e.target.value)} />
+                    
+                    <label className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-100 rounded-xl cursor-pointer">
+                      <Icon name="Image" size={16} className="text-slate-400"/>
+                      <span className="text-xs text-slate-400">{adminScratchImage ? '已選擇封面圖' : '上傳活動封面'}</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => setAdminScratchImage(e.target.files[0])} />
+                    </label>
+
+                    <p className="text-[10px] text-slate-400 mt-2 font-bold uppercase tracking-widest">設定中獎位置 (點擊下方):</p>
                     <div className="grid grid-cols-4 gap-2">
                        {Array(16).fill(0).map((_, i) => (
                          <button key={i} onClick={() => setAdminScratchWinnerIndex(i)} className={`aspect-square rounded-lg border-2 text-xs font-bold transition-all ${adminScratchWinnerIndex === i ? 'bg-sky-500 border-sky-600 text-white' : 'bg-slate-50 border-slate-100 text-slate-300'}`}>#{i+1}</button>
                        ))}
                     </div>
-                    <button onClick={handleSetupScratch} className="w-full py-4 btn-action font-bold text-xs shadow-lg mt-2">發布格子樂</button>
+                    <button onClick={handleAddScratchActivity} disabled={isAddingReward} className="w-full py-4 btn-action font-bold text-xs shadow-lg mt-2">{isAddingReward ? '發布中...' : '發布活動'}</button>
+                  
+                    <div className="border-t border-slate-100 pt-4 mt-4">
+                      <p className="text-[10px] text-slate-400 font-bold mb-2">已發布的活動:</p>
+                      {scratchActivities.map(game => (
+                        <div key={game.id} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl mb-2">
+                          <span className="text-xs font-bold text-slate-600">{game.title}</span>
+                          <button onClick={() => deleteItem('scratch_activities', game.id, game.title)} className="text-slate-300 hover:text-red-500"><Icon name="Trash2" size={14}/></button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
