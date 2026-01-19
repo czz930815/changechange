@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Point</title>
   
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@300;400;700&display=swap" rel="stylesheet">
@@ -20,7 +20,9 @@
       color: #334e68; 
       -webkit-tap-highlight-color: transparent; 
       font-weight: 300; 
-      overflow-x: hidden; 
+      overflow-x: hidden;
+      /* 手機版防彈跳 */
+      overscroll-behavior-y: none;
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     #root { opacity: 0; transition: opacity 0.5s ease-in; }
@@ -112,10 +114,13 @@
       background: #f8fafc; display: flex; flex-direction: column;
       align-items: center; justify-content: center; z-index: 100;
       transition: opacity 0.5s ease;
+      padding: 20px;
+      text-align: center;
     }
     .loading-icon { font-size: 40px; margin-bottom: 10px; }
-    .loading-text { letter-spacing: 2px; font-size: 13px; color: #94a3b8; }
-    .retry-btn { margin-top: 20px; padding: 8px 16px; border: 1px solid #cbd5e1; border-radius: 8px; color: #64748b; font-size: 12px; cursor: pointer; display: none; }
+    .loading-text { letter-spacing: 2px; font-size: 13px; color: #94a3b8; margin-bottom: 10px; }
+    .error-detail { font-size: 10px; color: #cbd5e1; max-width: 300px; word-break: break-all; }
+    .retry-btn { margin-top: 20px; padding: 10px 20px; background: white; border: 1px solid #cbd5e1; border-radius: 12px; color: #64748b; font-size: 14px; font-weight: bold; cursor: pointer; display: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
   </style>
 </head>
 <body>
@@ -125,16 +130,25 @@
   <div id="loading-screen">
     <div class="animate-float loading-icon">🛒</div>
     <div class="loading-text" id="loading-msg">正在連線至應有盡有大超商...</div>
+    <div class="error-detail" id="error-log"></div>
     <button class="retry-btn" id="retry-btn" onclick="window.location.reload()">重新連線</button>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, setPersistence, browserLocalPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+    function logError(msg) {
+      console.error(msg);
+      const el = document.getElementById('error-log');
+      if(el) el.innerText = msg;
+      document.getElementById('loading-msg').innerText = "連線發生問題";
+      document.getElementById('retry-btn').style.display = 'block';
+    }
+
     try {
-      // 定義備用配置 (來自您提供的原始代碼)
+      // 定義備用配置 (確保手機版能讀到)
       const fallbackConfig = {
         apiKey: "AIzaSyBAizT0ijN3-uxegV4w2HX6VFvXvYndc3c",
         authDomain: "change-389a0.firebaseapp.com",
@@ -144,23 +158,17 @@
         appId: "1:360528719647:web:474055ac8fb26e370c0a2a"
       };
 
-      let firebaseConfig;
-      let finalAppId;
+      let firebaseConfig = fallbackConfig;
+      let finalAppId = "love-sync-v1";
 
-      // 嘗試使用環境變數，如果沒有則使用備用配置
-      if (typeof __firebase_config !== 'undefined') {
+      // 嘗試使用環境變數
+      if (typeof __firebase_config !== 'undefined' && __firebase_config) {
         try {
           firebaseConfig = JSON.parse(__firebase_config);
           finalAppId = typeof __app_id !== 'undefined' ? __app_id : "default-app";
         } catch (e) {
-          console.warn("Parsing env config failed, using fallback");
-          firebaseConfig = fallbackConfig;
-          finalAppId = "love-sync-v1";
+          console.warn("Env config parse failed");
         }
-      } else {
-        console.warn("Env config undefined, using fallback");
-        firebaseConfig = fallbackConfig;
-        finalAppId = "love-sync-v1";
       }
 
       const app = initializeApp(firebaseConfig);
@@ -175,24 +183,29 @@
         isReady: true
       };
       
-      // 預設初始化登入
+      // 登入邏輯 (包含手機版修復)
       (async () => {
         try {
+          // 1. 嘗試設定持久性，如果失敗(手機iframe常發生)，改用記憶體模式
+          try {
+            await setPersistence(auth, browserLocalPersistence);
+          } catch (e) {
+            console.warn("Persistence blocked, using memory", e);
+            await setPersistence(auth, inMemoryPersistence);
+          }
+
+          // 2. 執行登入
           if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
              await signInWithCustomToken(auth, __initial_auth_token);
           } else {
              await signInAnonymously(auth);
           }
         } catch (e) {
-          console.error("Auth init failed", e);
-          document.getElementById('loading-msg').innerText = "登入驗證失敗，請重試";
-          document.getElementById('retry-btn').style.display = 'block';
+          logError("登入失敗: " + e.message);
         }
       })();
     } catch (err) {
-      console.error("Firebase init failed", err);
-      document.getElementById('loading-msg').innerText = "系統初始化失敗";
-      document.getElementById('retry-btn').style.display = 'block';
+      logError("初始化失敗: " + err.message);
     }
     
     // 超時處理
@@ -224,7 +237,7 @@
         Check: <polyline points="20 6 9 17 4 12"/>,
         Alert: (<Fragment><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></Fragment>),
         History: (<Fragment><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></Fragment>),
-        Sparkles: (<Fragment><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M9 3v4M3 5h4M3 9h4"/></Fragment>),
+        Sparkles: (<Fragment><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M9 3v4M3 5h4M3 9h4"/></Fragment>),
         Image: (<Fragment><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></Fragment>),
         Plus: (<Fragment><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Fragment>),
         Dice: (<Fragment><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/></Fragment>),
@@ -566,12 +579,33 @@
       const handleAddScratchActivity = async () => {
         if(!adminScratchTitle || !adminScratchPrize || !adminScratchTarget || adminScratchWinnerIndex === null || !adminScratchCost) return alert("資料不全");
         
+        const targetNum = parseInt(adminScratchTarget);
+        if (targetNum < 1 || targetNum > 16) {
+           return alert("中獎數字必須是 1-16 之間");
+        }
+
         setIsAddingReward(true);
         try {
           let img = "https://placehold.co/400x300/e0f2fe/0ea5e9?text=Game";
           if (adminScratchImage) img = await compressImage(adminScratchImage);
 
-          const grid = Array(16).fill(0).map((_, i) => i === adminScratchWinnerIndex ? adminScratchTarget : Math.floor(Math.random()*90)+10);
+          const grid = new Array(16).fill(0);
+          grid[adminScratchWinnerIndex] = targetNum;
+
+          // Create array 1-16 excluding target
+          const others = [];
+          for(let i=1; i<=16; i++) {
+            if(i !== targetNum) others.push(i);
+          }
+          // Shuffle others
+          others.sort(() => Math.random() - 0.5);
+
+          let otherIdx = 0;
+          for(let i=0; i<16; i++) {
+            if(i !== adminScratchWinnerIndex) {
+              grid[i] = others[otherIdx++];
+            }
+          }
           
           await addDoc(getPublicRef('scratch_activities'), { 
             title: adminScratchTitle,
@@ -853,7 +887,7 @@
                       <input className="w-1/2 bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="大獎名稱" value={adminScratchPrize} onChange={(e) => setAdminScratchPrize(e.target.value)} />
                       <input type="number" className="w-1/2 bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="每次遊玩點數" value={adminScratchCost} onChange={(e) => setAdminScratchCost(e.target.value)} />
                     </div>
-                    <input type="number" className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="中獎數字 (10-99)" value={adminScratchTarget} onChange={(e) => setAdminScratchTarget(e.target.value)} />
+                    <input type="number" className="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm outline-none" placeholder="中獎數字 (1-16)" value={adminScratchTarget} onChange={(e) => setAdminScratchTarget(e.target.value)} />
                     
                     <label className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-100 rounded-xl cursor-pointer">
                       <Icon name="Image" size={16} className="text-slate-400"/>
