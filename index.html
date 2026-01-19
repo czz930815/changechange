@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Point Premium</title>
+  <title>Point Premium | 應有盡有大超商</title>
   
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@300;400;700&display=swap" rel="stylesheet">
   
@@ -16,8 +16,8 @@
     * { font-family: 'M PLUS Rounded 1c', sans-serif !important; }
     
     body { 
-      background-color: #f1f5f9; 
-      color: #1e293b; 
+      background-color: #f8fafc; 
+      color: #0f172a; 
       -webkit-tap-highlight-color: transparent; 
       font-weight: 400; 
       overflow-x: hidden;
@@ -27,172 +27,70 @@
     #root { opacity: 0; transition: opacity 0.5s ease-in; }
     #root.loaded { opacity: 1; }
     
-    /* Animations */
     @keyframes floating { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
     .animate-float { animation: floating 4s ease-in-out infinite; }
     
     img { display: block; max-width: 100%; height: auto; border-radius: 12px; }
     
-    /* Luxury Theme Classes */
-    .luxury-gradient { background: linear-gradient(135deg, #0f172a 0%, #334155 100%); } /* Dark Slate */
-    .luxury-gold-gradient { background: linear-gradient(135deg, #d4af37 0%, #fcd34d 100%); } /* Gold */
-    .luxury-card { 
-      background: rgba(255, 255, 255, 0.9); 
-      backdrop-filter: blur(12px); 
-      border: 1px solid rgba(226, 232, 240, 0.8); 
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    /* 配色升級：午夜藍 & 質感金 */
+    .luxury-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+    .gold-accent { color: #d4af37; }
+    .gold-bg { background: linear-gradient(135deg, #d4af37 0%, #fcd34d 100%); }
+    .gold-border { border-color: #d4af37; }
+    
+    .glass-card { 
+      background: rgba(255, 255, 255, 0.95); 
+      backdrop-filter: blur(10px); 
+      border: 1px solid rgba(226, 232, 240, 0.5); 
+      box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05);
     }
     
-    .gold-text { color: #b45309; }
-    .dark-text { color: #0f172a; }
-    
-    .point-display-card { 
-      background: rgba(255, 255, 255, 0.1); 
-      backdrop-filter: blur(16px); 
+    .point-card { 
+      background: rgba(255, 255, 255, 0.08); 
+      backdrop-filter: blur(20px); 
       border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     }
     
-    .coupon-card {
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-left: 4px solid #0f172a; /* Luxury accent */
-      border-radius: 12px;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    /* 轉盤外觀優化 */
+    .wheel-segment {
+        position: absolute; width: 50%; height: 50%;
+        top: 0; right: 0; transform-origin: 0% 100%;
+        display: flex; align-items: center; justify-content: center;
     }
-    .coupon-used { filter: grayscale(1); opacity: 0.6; border-color: #cbd5e1; }
+    .wheel-text {
+        position: absolute; left: -100%; width: 200%;
+        text-align: center; transform: rotate(30deg) translate(0, -75px);
+        font-size: 11px; font-weight: 800;
+    }
 
-    .scratch-grid-cell {
-      aspect-ratio: 1/1;
-      background: #cbd5e1;
-      border-radius: 8px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-      border: 1px solid #f8fafc;
-    }
-    .scratch-grid-cell.revealed {
-      background: #f1f5f9;
-      border-color: #e2e8f0;
-      box-shadow: none;
-    }
-    .scratch-canvas {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      cursor: crosshair; touch-action: none; z-index: 5;
-    }
-    .scratch-content {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 1.2rem;
-      z-index: 1; background: white; color: #0f172a;
-    }
-    .scratch-grid-cell.revealed .scratch-content { color: #94a3b8; background: transparent; }
-
-    /* Wheel Animation */
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(1800deg); } }
-    
-    /* RPS Animation */
-    @keyframes bounce-hand {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-    .animate-bounce-hand { animation: bounce-hand 0.5s ease-in-out infinite; }
-
-    .btn-primary {
-      background: #0f172a; /* Dark Slate */
-      color: white;
-      transition: all 0.3s ease;
+    .btn-luxury {
+      background: #0f172a;
+      color: #f1f5f9;
+      transition: all 0.3s;
       font-weight: 500;
-      border-radius: 10px;
+      border-radius: 12px;
     }
-    .btn-primary:active { transform: scale(0.98); background: #1e293b; }
+    .btn-luxury:active { transform: scale(0.96); background: #1e293b; }
     
-    .btn-accent {
-      background: linear-gradient(135deg, #d4af37 0%, #f59e0b 100%);
+    .btn-gold {
+      background: linear-gradient(135deg, #d4af37 0%, #b45309 100%);
       color: white;
-      transition: all 0.3s ease;
-      font-weight: 600;
-      border-radius: 10px;
-      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      font-weight: 700;
+      border-radius: 12px;
     }
-    .btn-accent:active { transform: scale(0.98); }
 
     .marquee { white-space: nowrap; overflow: hidden; box-sizing: border-box; }
     .marquee span { display: inline-block; padding-left: 100%; animation: marquee 20s linear infinite; }
     @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-    input, textarea, select { font-weight: 400 !important; }
-    button { font-weight: 400 !important; }
-    .log-item { border-bottom: 1px solid #f1f5f9; }
-    .log-item:last-child { border-bottom: none; }
-    
     #loading-screen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: #f8fafc; display: flex; flex-direction: column;
       align-items: center; justify-content: center; z-index: 100;
-      transition: opacity 0.5s ease;
-      padding: 20px;
-      text-align: center;
+      transition: opacity 0.5s ease; padding: 20px; text-align: center;
     }
     .loading-icon { font-size: 40px; margin-bottom: 10px; }
-    .loading-text { letter-spacing: 2px; font-size: 13px; color: #64748b; margin-bottom: 10px; font-weight: 500; }
-    .error-detail { font-size: 10px; color: #cbd5e1; max-width: 300px; word-break: break-all; }
-    .retry-btn { margin-top: 20px; padding: 10px 24px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; color: #475569; font-size: 14px; font-weight: bold; cursor: pointer; display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    
-    .settings-input {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 8px 12px;
-        font-size: 13px;
-        width: 100%;
-        outline: none;
-        transition: all 0.2s;
-        color: #334155;
-    }
-    .settings-input:focus {
-        border-color: #94a3b8;
-        box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.1);
-    }
-    .settings-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #64748b;
-        margin-bottom: 4px;
-        display: block;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-    }
-    .delete-badge {
-        position: absolute; top: -8px; right: -8px; 
-        background: #ef4444; color: white; width: 24px; height: 24px; 
-        border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2); cursor: pointer; z-index: 20;
-    }
-    
-    /* Wheel Segments */
-    .wheel-segment {
-        position: absolute;
-        top: 0; right: 0;
-        width: 50%; height: 50%;
-        transform-origin: 0% 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .wheel-text {
-        position: absolute;
-        left: -100%;
-        width: 200%;
-        text-align: center;
-        transform: rotate(45deg) translate(0, -60px);
-        font-size: 10px;
-        font-weight: 800;
-        color: #475569;
-    }
   </style>
 </head>
 <body>
@@ -200,10 +98,10 @@
   <div id="root"></div>
 
   <div id="loading-screen">
-    <div class="animate-float loading-icon">💎</div>
-    <div class="loading-text" id="loading-msg">正在開啟 VIP 專屬服務...</div>
-    <div class="error-detail" id="error-log"></div>
-    <button class="retry-btn" id="retry-btn" onclick="window.location.reload()">重新連線</button>
+    <div class="animate-float loading-icon">🛒</div>
+    <div class="loading-text" id="loading-msg" style="color:#0f172a; font-weight:bold;">應有盡有大超商 竭誠為您服務</div>
+    <div class="error-detail" id="error-log" style="font-size:10px; color:#94a3b8; margin-top:10px;"></div>
+    <button class="retry-btn" id="retry-btn" onclick="window.location.reload()" style="margin-top:20px; padding:10px 20px; border:1px solid #cbd5e1; border-radius:10px; display:none;">重新連線</button>
   </div>
 
   <script type="module">
@@ -211,16 +109,7 @@
     import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, setPersistence, browserLocalPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc, arrayUnion, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    function logError(msg) {
-      console.error(msg);
-      const el = document.getElementById('error-log');
-      if(el) el.innerText = msg;
-      document.getElementById('loading-msg').innerText = "連線發生問題";
-      document.getElementById('retry-btn').style.display = 'block';
-    }
-
     try {
-      // Config placeholder
       const fallbackConfig = {
         apiKey: "AIzaSyBAizT0ijN3-uxegV4w2HX6VFvXvYndc3c",
         authDomain: "change-389a0.firebaseapp.com",
@@ -237,50 +126,23 @@
         try {
           firebaseConfig = JSON.parse(__firebase_config);
           finalAppId = typeof __app_id !== 'undefined' ? __app_id : "default-app";
-        } catch (e) {
-          console.warn("Env config parse failed");
-        }
+        } catch (e) {}
       }
 
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
       const db = getFirestore(app);
 
-      window.fb = { 
-        db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, 
-        increment, serverTimestamp, deleteDoc, arrayUnion, getDoc, appId: finalAppId, 
-        signInAnonymously, onAuthStateChanged, signInWithCustomToken,
-        isReady: true
-      };
+      window.fb = { db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc, arrayUnion, getDoc, appId: finalAppId, signInAnonymously, onAuthStateChanged, signInWithCustomToken, isReady: true };
       
       (async () => {
         try {
-          try {
-            await setPersistence(auth, browserLocalPersistence);
-          } catch (e) {
-            await setPersistence(auth, inMemoryPersistence);
-          }
-
-          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-             await signInWithCustomToken(auth, __initial_auth_token);
-          } else {
-             await signInAnonymously(auth);
-          }
-        } catch (e) {
-          logError("登入失敗: " + e.message);
-        }
+          try { await setPersistence(auth, browserLocalPersistence); } catch (e) { await setPersistence(auth, inMemoryPersistence); }
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+          else await signInAnonymously(auth);
+        } catch (e) { console.error(e); }
       })();
-    } catch (err) {
-      logError("初始化失敗: " + err.message);
-    }
-    
-    setTimeout(() => {
-      const ls = document.getElementById('loading-screen');
-      if (ls && ls.style.display !== 'none' && !window.fb?.isReady) {
-         document.getElementById('loading-msg').innerText = "連線回應較慢...";
-         document.getElementById('retry-btn').style.display = 'block';
-      }
-    }, 8000);
+    } catch (err) { console.error(err); }
   </script>
 
   <script type="text/babel">
@@ -305,15 +167,7 @@
         Image: (<Fragment><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></Fragment>),
         Plus: (<Fragment><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Fragment>),
         Dice: (<Fragment><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/></Fragment>),
-        Calendar: (<Fragment><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></Fragment>),
-        XCircle: (<Fragment><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></Fragment>),
-        ArrowLeft: (<Fragment><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></Fragment>),
-        Eye: (<Fragment><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></Fragment>),
-        Disc: (<Fragment><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 0 0 0 20"/><path d="M12 12 2.3 10.5"/><path d="M12 12l9.7-1.5"/></Fragment>),
-        Target: (<Fragment><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Fragment>),
-        PiggyBank: (<Fragment><path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5c-3 3-5 3-5 3s-0.5-2.3 3-5l2.5-2.5c1-1 2.5-1.5 4-1.5 2.5 0 4.8 1.5 5.8 3.5H19z"/><path d="M19 5h-1"/><path d="M22 9c0 5-4 9-9 9s-9-4-9-9c0-3.3 2-6.2 4.9-7.9l0.9 0.9C7.5 3.1 6 5.4 6 8c0 3.3 2.7 6 6 6s6-2.7 6-6c0-2-0.8-3.8-2.2-5l0.7-0.7c3.1 1.7 5.5 5 5.5 6.7z"/></Fragment>),
         Hand: (<Fragment><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></Fragment>),
-        Edit: (<Fragment><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></Fragment>),
         Save: (<Fragment><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></Fragment>),
       };
       return (
@@ -326,86 +180,35 @@
     const ScratchCell = ({ value, canScratch, onRevealed, isRevealed }) => {
       const canvasRef = useRef(null);
       const [revealed, setRevealed] = useState(isRevealed);
-
       useEffect(() => { setRevealed(isRevealed); }, [isRevealed]);
-
       useEffect(() => {
         const canvas = canvasRef.current;
         if(!canvas) return;
-        if (revealed) {
-          const ctx = canvas.getContext('2d');
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          return;
-        }
+        if (revealed) { canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height); return; }
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#94a3b8'; // Darker grey
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#f1f5f9';
-        ctx.font = 'bold 12px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('刮', canvas.width/2, canvas.height/2 + 5);
+        ctx.fillStyle = '#94a3b8'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#f1f5f9'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('刮', canvas.width/2, canvas.height/2 + 5);
       }, [revealed]);
-
       const handleScratch = (e) => {
         if(revealed || !canScratch) return;
         const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
         const rect = canvas.getBoundingClientRect();
         const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
         const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.fill();
+        const ctx = canvas.getContext('2d');
+        ctx.globalCompositeOperation = 'destination-out'; ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.fill();
         if(!revealed) { setRevealed(true); onRevealed(value); }
       };
-
       return (
         <div className={`scratch-grid-cell ${revealed ? 'revealed' : ''}`}>
           <div className="scratch-content">{value}</div>
-          <canvas ref={canvasRef} className="scratch-canvas" width={80} height={80}
-            style={{ pointerEvents: revealed ? 'none' : 'auto' }} 
-            onMouseMove={(e) => e.buttons === 1 && handleScratch(e)}
-            onTouchMove={handleScratch} onMouseDown={handleScratch} onTouchStart={handleScratch}
-          />
+          <canvas ref={canvasRef} className="scratch-canvas" width={80} height={80} style={{ pointerEvents: revealed ? 'none' : 'auto' }} onMouseMove={(e) => e.buttons === 1 && handleScratch(e)} onTouchMove={handleScratch} onMouseDown={handleScratch} onTouchStart={handleScratch} />
         </div>
       );
     };
 
-    const compressImage = (file) => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (e) => {
-          const img = new Image();
-          img.src = e.target.result;
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 400; 
-            const scale = MAX_WIDTH / img.width;
-            canvas.width = MAX_WIDTH;
-            canvas.height = img.height * scale;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            resolve(canvas.toDataURL('image/jpeg', 0.5)); 
-          };
-        };
-      });
-    };
-
-    function InitWrapper() {
-      const [ready, setReady] = useState(false);
-      useEffect(() => {
-        const timer = setInterval(() => {
-          if (window.fb && window.fb.isReady) { setReady(true); clearInterval(timer); }
-        }, 100);
-        return () => clearInterval(timer);
-      }, []);
-      if (!ready) return null;
-      return <App />;
-    }
-
     function App() {
-      const { db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc, arrayUnion, appId, onAuthStateChanged, signInWithCustomToken, signInAnonymously } = window.fb;
-
+      const { db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc, arrayUnion, appId, onAuthStateChanged } = window.fb;
       const [user, setUser] = useState(null);
       const [activeTab, setActiveTab] = useState('home');
       const [currentActivity, setCurrentActivity] = useState(null); 
@@ -415,78 +218,27 @@
       const [submissions, setSubmissions] = useState([]);
       const [rewards, setRewards] = useState([]);
       const [notifications, setNotifications] = useState([]);
-      const [announcement, setAnnouncement] = useState('歡迎光臨 Point Premium 會員俱樂部');
+      const [announcement, setAnnouncement] = useState('應有盡有大超商 精品生活新定義');
       const [loading, setLoading] = useState(true);
 
-      const [desc, setDesc] = useState('');
-      const [selectedFile, setSelectedFile] = useState(null);
-      const [isUploading, setIsUploading] = useState(false);
-      const [adminPass, setAdminPass] = useState('');
-      const [showAdminLogin, setShowAdminLogin] = useState(false);
-
-      const [wishName, setWishName] = useState('');
-      const [wishImage, setWishImage] = useState(null);
-      const [showWishForm, setShowWishForm] = useState(false);
-      const [isWishing, setIsWishing] = useState(false);
-
-      // Admin & Shop States
+      // Admin & Settings
+      const [gameSettings, setGameSettings] = useState({ wheelCost: 20, wheelSegments: Array(6).fill({label: "N/A", value: 0, color: "#f1f5f9"}), rpsCost: 10, rpsWinMultiplier: 2, bankRate: 0.05, bankLockHours: 24, checkInPoints: 2, missions: [] });
+      const [pendingSettings, setPendingSettings] = useState(null);
       const [adminRewardName, setAdminRewardName] = useState('');
       const [adminRewardCost, setAdminRewardCost] = useState('');
       const [adminRewardImage, setAdminRewardImage] = useState(null);
-      const [isAddingReward, setIsAddingReward] = useState(false);
+      const [adminPass, setAdminPass] = useState('');
+      const [showAdminLogin, setShowAdminLogin] = useState(false);
       const [approvalPoints, setApprovalPoints] = useState({});
       const [rejectionReasons, setRejectionReasons] = useState({});
       const [penaltyDesc, setPenaltyDesc] = useState('');
       const [penaltyAmount, setPenaltyAmount] = useState('');
-      const [pricingId, setPricingId] = useState(null);
-      const [pricingCost, setPricingCost] = useState('');
-
-      // New Admin States for Dynamic Missions
       const [newMissionTitle, setNewMissionTitle] = useState('');
       const [newMissionTarget, setNewMissionTarget] = useState('');
       const [newMissionReward, setNewMissionReward] = useState('');
-      const [newMissionType, setNewMissionType] = useState('streak'); // 'streak' or 'total'
+      const [newMissionType, setNewMissionType] = useState('streak');
 
-      // Default Settings
-      const defaultWheelSegments = [
-        { label: "10 點", value: 10, type: "point", color: "#fef3c7" }, // Gold-ish
-        { label: "再接再厲", value: 0, type: "text", color: "#e2e8f0" }, // Grey
-        { label: "5 點", value: 5, type: "point", color: "#dbeafe" }, // Blue-ish
-        { label: "50 點", value: 50, type: "point", color: "#fcd34d" }, // Gold
-        { label: "銘謝惠顧", value: 0, type: "text", color: "#cbd5e1" }, // Grey
-        { label: "20 點", value: 20, type: "point", color: "#93c5fd" }  // Blue
-      ];
-
-      const defaultMissions = [
-        { id: 'm1', title: '連續打卡 7 天', type: 'streak', target: 7, reward: 50 },
-        { id: 'm2', title: '累計獲得 100 點', type: 'total', target: 100, reward: 100 }
-      ];
-
-      const [gameSettings, setGameSettings] = useState({
-        wheelCost: 20, 
-        wheelSegments: defaultWheelSegments,
-        rpsCost: 10, rpsWinMultiplier: 2,
-        bankRate: 0.05, bankLockHours: 24,
-        checkInPoints: 2,
-        missions: defaultMissions
-      });
-      const [pendingSettings, setPendingSettings] = useState({...gameSettings});
-
-      // Scratch & Other Game States
-      const [scratchActivities, setScratchActivities] = useState([]);
-      const [selectedScratchGame, setSelectedScratchGame] = useState(null); 
-      const [canScratchNow, setCanScratchNow] = useState(false);
-      const [currentGameProgress, setCurrentGameProgress] = useState([]); 
-      const [allScratchProgress, setAllScratchProgress] = useState([]);
-      const [adminMonitoringGame, setAdminMonitoringGame] = useState(null);
-      const [adminScratchTitle, setAdminScratchTitle] = useState('');
-      const [adminScratchCost, setAdminScratchCost] = useState('');
-      const [adminScratchPrize, setAdminScratchPrize] = useState('');
-      const [adminScratchTarget, setAdminScratchTarget] = useState('');
-      const [adminScratchWinnerIndex, setAdminScratchWinnerIndex] = useState(null);
-      const [adminScratchImage, setAdminScratchImage] = useState(null);
-      const [editingScratchId, setEditingScratchId] = useState(null);
-
+      // Game States
       const [savings, setSavings] = useState({ balance: 0, lastInterestTime: null, lastDepositTime: null });
       const [wheelSpinning, setWheelSpinning] = useState(false);
       const [wheelRotation, setWheelRotation] = useState(0);
@@ -494,1096 +246,285 @@
       const [rpsUserChoice, setRpsUserChoice] = useState(null);
       const [rpsCpuChoice, setRpsCpuChoice] = useState(null);
 
-      const [givePointsReason, setGivePointsReason] = useState('');
-      const [givePointsAmount, setGivePointsAmount] = useState('');
-      const [isCheckingIn, setIsCheckingIn] = useState(false);
+      const [desc, setDesc] = useState('');
+      const [selectedFile, setSelectedFile] = useState(null);
+      const [isUploading, setIsUploading] = useState(false);
+      const [wishName, setWishName] = useState('');
+      const [wishImage, setWishImage] = useState(null);
+      const [isWishing, setIsWishing] = useState(false);
       const [checkInImage, setCheckInImage] = useState(null);
+      const [isCheckingIn, setIsCheckingIn] = useState(false);
 
       const getPublicRef = (name) => collection(db, 'artifacts', appId, 'public', 'data', name);
 
-      // --- Effects ---
       useEffect(() => {
-        return onAuthStateChanged(auth, (u) => {
-          if (u) { setUser(u); setLoading(false); }
-        });
+        return onAuthStateChanged(auth, (u) => { if (u) { setUser(u); setLoading(false); const ls = document.getElementById('loading-screen'); if (ls) ls.style.display = 'none'; document.getElementById('root').classList.add('loaded'); } });
       }, [auth]);
 
       useEffect(() => {
         if (!user) return;
-        const unsubStats = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), (d) => {
-          if (d.exists()) {
-            setPoints(d.data().totalPoints || 0);
-            setStats({ totalIssued: d.data().totalIssued || 0, totalRedeemed: d.data().totalRedeemed || 0 });
-          } else {
-            setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: 0, totalIssued: 0, totalRedeemed: 0 });
-          }
-        });
-        const unsubSubs = onSnapshot(getPublicRef('submissions'), (s) => setSubmissions(s.docs.map(d => ({id: d.id, ...d.data()}))));
-        const unsubRewards = onSnapshot(getPublicRef('rewards'), (s) => setRewards(s.docs.map(d => ({id: d.id, ...d.data()}))));
-        const unsubScratchActs = onSnapshot(getPublicRef('scratch_activities'), (s) => setScratchActivities(s.docs.map(d => ({id: d.id, ...d.data()}))));
-        const unsubScratchProgress = onSnapshot(getPublicRef('scratch_progress'), (s) => setAllScratchProgress(s.docs.map(d => ({id: d.id, ...d.data()}))));
-        const unsubAnnounce = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'announce'), (d) => { if (d.exists()) setAnnouncement(d.data().text); });
-        const unsubNotifs = onSnapshot(getPublicRef('notifications'), (s) => setNotifications(s.docs.map(d => ({id: d.id, ...d.data()}))));
-        const unsubSavings = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), (d) => {
-           if(d.exists()) setSavings(d.data()); else setSavings({ balance: 0, lastInterestTime: null, lastDepositTime: null });
-        });
-        const unsubGameSettings = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'games'), (d) => {
-           if(d.exists()) {
-              const data = d.data();
-              if(!data.missions) data.missions = defaultMissions;
-              const merged = { ...gameSettings, ...data };
-              setGameSettings(merged);
-              if(!pendingSettings) setPendingSettings(merged);
-           } else {
-              setPendingSettings(gameSettings);
-           }
-        });
-        return () => { unsubStats(); unsubSubs(); unsubRewards(); unsubNotifs(); unsubAnnounce(); unsubScratchActs(); unsubScratchProgress(); unsubSavings(); unsubGameSettings(); };
-      }, [user, db, appId]);
+        onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), (d) => { if (d.exists()) { setPoints(d.data().totalPoints || 0); setStats({ totalIssued: d.data().totalIssued || 0, totalRedeemed: d.data().totalRedeemed || 0 }); } });
+        onSnapshot(getPublicRef('submissions'), (s) => setSubmissions(s.docs.map(d => ({id: d.id, ...d.data()}))));
+        onSnapshot(getPublicRef('rewards'), (s) => setRewards(s.docs.map(d => ({id: d.id, ...d.data()}))));
+        onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'announce'), (d) => { if (d.exists()) setAnnouncement(d.data().text); });
+        onSnapshot(getPublicRef('notifications'), (s) => setNotifications(s.docs.map(d => ({id: d.id, ...d.data()}))));
+        onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), (d) => { if(d.exists()) setSavings(d.data()); });
+        onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'games'), (d) => { if(d.exists()) { setGameSettings(d.data()); setPendingSettings(d.data()); } });
+      }, [user]);
 
-      useEffect(() => {
-        if (!user || !selectedScratchGame) { setCurrentGameProgress([]); return; }
-        const progressDocId = `${selectedScratchGame.id}_${user.uid}`;
-        const unsubProgress = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', progressDocId), (d) => {
-          if (d.exists()) setCurrentGameProgress(d.data().revealedIndices || []); else setCurrentGameProgress([]);
-        });
-        return () => unsubProgress();
-      }, [selectedScratchGame, user]);
-
-      // --- Admin Functions ---
-      const deleteItem = async (colName, id, itemName) => {
-        if (!confirm(`確定要刪除「${itemName}」嗎？`)) return;
-        try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', colName, id)); } catch (e) { alert("刪除失敗"); }
-      };
-
-      const checkAdmin = () => {
-        if (adminPass === 'love1314') {
-          setIsAdmin(true); setShowAdminLogin(false); setAdminPass(''); setActiveTab('admin'); setPendingSettings({...gameSettings});
-          alert('尊榮會員 歡迎回來');
-        } else { alert('密碼錯誤'); }
-      };
-
-      // --- Handlers ---
-      const handleUploadTask = async () => {
-        if (!desc.trim() || !selectedFile) return alert("請填寫內容並附上照片");
-        setIsUploading(true);
-        try {
-          const imgBase64 = await compressImage(selectedFile);
-          await addDoc(getPublicRef('submissions'), {
-            description: desc, image: imgBase64, status: 'pending', timestamp: serverTimestamp(), userId: user.uid
-          });
-          setDesc(''); setSelectedFile(null); alert("提交成功，等待審核");
-        } catch(e){ console.error(e); alert("提交失敗"); } finally { setIsUploading(false); }
-      };
-
-      const handleApprove = async (sub, customPoints) => {
-        const pts = parseInt(customPoints) || 10;
-        try {
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', sub.id), { status: 'approved', awardedPoints: pts });
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(pts), totalIssued: increment(pts) });
-          alert(`已批准並發放 ${pts} 點`);
-        } catch(e) { alert("操作失敗"); }
-      };
-
-      const handleReject = async (sub) => {
-        const reason = rejectionReasons[sub.id] || '未提供原因';
-        if (!confirm(`確定拒絕？`)) return;
-        try {
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', sub.id), { status: 'rejected', rejectionReason: reason, awardedPoints: 0 });
-          setRejectionReasons(prev => { const next = { ...prev }; delete next[sub.id]; return next; });
-        } catch(e) { alert("操作失敗"); }
-      };
-
-      const handleGivePoints = async () => {
-        if (!givePointsAmount) return alert("請輸入分數");
-        const pts = parseInt(givePointsAmount);
-        const reason = givePointsReason.trim() || "額外獎勵";
-        try {
-          await addDoc(getPublicRef('submissions'), { description: `🎁 系統補給：${reason}`, status: 'bonus', awardedPoints: pts, timestamp: serverTimestamp(), userId: user.uid });
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(pts), totalIssued: increment(pts) });
-          alert(`已發送 ${pts} 點`);
-        } catch(e) { alert("發送失敗"); }
-      };
-
-      const handleDeductPoints = async () => {
-        if (!penaltyDesc.trim() || !penaltyAmount) return alert("原因或分數沒填");
-        const pts = parseInt(penaltyAmount);
-        try {
-          await addDoc(getPublicRef('submissions'), { description: `⚠️ 扣點：${penaltyDesc}`, status: 'deducted', awardedPoints: -pts, timestamp: serverTimestamp(), userId: user.uid });
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-pts), totalRedeemed: increment(pts) });
-          alert(`已扣除 ${pts} 點`);
-        } catch (e) { alert("操作失敗"); }
-      };
-
-      const handlePriceWish = async (wish) => {
-        if (!pricingCost) return alert("請輸入點數");
-        try {
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rewards', wish.id), { cost: parseInt(pricingCost), available: true });
-          setPricingId(null); setPricingCost(''); alert("定價上架完成");
-        } catch (e) { alert("操作失敗"); }
-      };
-
-      const handleAddRewardByAdmin = async () => {
-        if (!adminRewardName || !adminRewardCost) return alert("資訊不全");
-        setIsAddingReward(true);
-        try {
-          let img = "https://placehold.co/400x300/e2e8f0/64748b?text=Gift";
-          if (adminRewardImage) img = await compressImage(adminRewardImage);
-          await addDoc(getPublicRef('rewards'), {
-            name: adminRewardName, image: img, cost: parseInt(adminRewardCost), available: true, timestamp: serverTimestamp()
-          });
-          setAdminRewardName(''); setAdminRewardCost(''); setAdminRewardImage(null); alert("上架成功");
-        } catch(e) { alert("失敗"); } finally { setIsAddingReward(false); }
-      };
-
-      const handleMakeWish = async () => {
-        if (!wishName.trim()) return alert("想要什麼？");
-        setIsWishing(true);
-        try {
-          let img = "https://placehold.co/400x300/e2e8f0/64748b?text=Wish";
-          if (wishImage) img = await compressImage(wishImage);
-          await addDoc(getPublicRef('rewards'), { name: wishName, image: img, cost: 0, available: false, timestamp: serverTimestamp(), userId: user.uid });
-          setShowWishForm(false); setWishName(''); setWishImage(null); alert("許願成功");
-        } catch (e) { alert("失敗"); } finally { setIsWishing(false); }
-      };
-
-      const handleRedeem = async (reward) => {
-        if (points < Number(reward.cost)) return alert("點數不足");
-        if (!confirm(`確定兌換「${reward.name}」？`)) return;
-        try {
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-reward.cost), totalRedeemed: increment(reward.cost) });
-          await addDoc(getPublicRef('submissions'), { description: `🎁 已兌換：${reward.name}`, image: reward.image, status: 'redeemed', timestamp: serverTimestamp(), userId: user.uid, awardedPoints: -reward.cost });
-          alert("兌換成功！");
-        } catch (e) { alert("失敗"); }
-      };
+      const handleSaveGameSettings = async () => { try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'games'), pendingSettings, { merge: true }); alert("設定已更新"); } catch(e) { alert("更新失敗"); } };
+      const handleApprove = async (sub, pts) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', sub.id), { status: 'approved', awardedPoints: parseInt(pts) }); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(pts), totalIssued: increment(pts) }); alert("已批准"); };
+      const handleReject = async (sub) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', sub.id), { status: 'rejected', rejectionReason: rejectionReasons[sub.id] || "不符合規則", awardedPoints: 0 }); alert("已拒絕"); };
+      const checkAdmin = () => { if (adminPass === 'love1314') { setIsAdmin(true); setShowAdminLogin(false); setActiveTab('admin'); alert('管理員 您好'); } else alert('密碼錯誤'); };
 
       const handleCheckIn = async () => {
-        const today = new Date().toDateString();
-        const hasCheckedIn = submissions.some(s => s.status === 'checkin' && new Date(s.timestamp?.seconds * 1000).toDateString() === today);
-        if (hasCheckedIn) { alert("今天已打卡"); return; }
-        if (!checkInImage) { alert("請上傳照片"); return; }
-
+        if (isCheckingIn || !checkInImage) return;
         setIsCheckingIn(true);
         try {
-          const imgBase64 = await compressImage(checkInImage);
-          const points = gameSettings.checkInPoints || 2;
-          await addDoc(getPublicRef('submissions'), { 
-            description: "💅 指甲保護打卡", image: imgBase64, status: 'checkin', awardedPoints: points, timestamp: serverTimestamp(), userId: user.uid 
-          });
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(points), totalIssued: increment(points) });
-          alert(`打卡成功！獲得 ${points} 點`);
-          setCheckInImage(null);
-        } catch (e) { console.error(e); alert("失敗"); } finally { setIsCheckingIn(false); }
+          const img = await compressImage(checkInImage);
+          const pts = gameSettings.checkInPoints || 2;
+          await addDoc(getPublicRef('submissions'), { description: "💅 指甲打卡紀錄", image: img, status: 'checkin', awardedPoints: pts, timestamp: serverTimestamp(), userId: user.uid });
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(pts), totalIssued: increment(pts) });
+          setCheckInImage(null); alert("打卡成功");
+        } catch(e) { alert("失敗"); } finally { setIsCheckingIn(false); }
       };
 
-      const handlePayToScratch = async (game) => {
-        if(points < game.cost) return alert("點數不足");
-        if(!confirm(`確定花 ${game.cost} 點玩一次？`)) return;
-        try {
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-game.cost), totalRedeemed: increment(game.cost) });
-          await addDoc(getPublicRef('submissions'), { description: `🎲 參加格子樂：${game.title}`, status: 'scratch', awardedPoints: -game.cost, timestamp: serverTimestamp(), userId: user.uid });
-          setCanScratchNow(true);
-        } catch(e) { alert("失敗"); }
-      };
-
-      const handleRevealed = async (val, game, index) => {
-        setCanScratchNow(false);
-        const progressDocId = `${game.id}_${user.uid}`;
-        const progressRef = doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', progressDocId);
-        try {
-          await setDoc(progressRef, { revealedIndices: arrayUnion(index), gameId: game.id, userId: user.uid, timestamp: serverTimestamp() }, { merge: true });
-        } catch(e) { console.error("Save progress failed", e); }
-        if(String(val) === String(game.target)) {
-          alert(`🎉 恭喜刮中：${game.prize}`);
-          await addDoc(getPublicRef('submissions'), { description: `🎁 刮刮樂中獎：${game.prize} (${game.title})`, image: game.image || "https://placehold.co/400x300/e0f2fe/0ea5e9?text=WINNER", status: 'redeemed', timestamp: serverTimestamp(), userId: user.uid, awardedPoints: 0 });
-        }
-      };
-
-      const handleAddScratchActivity = async () => {
-        if (!adminScratchTitle || !adminScratchPrize || !adminScratchCost) return alert("資料不全");
-        setIsAddingReward(true);
-        try {
-          let img = null;
-          if (adminScratchImage) img = await compressImage(adminScratchImage);
-          if (editingScratchId) {
-             const updateData = { title: adminScratchTitle, prize: adminScratchPrize, cost: parseInt(adminScratchCost) };
-             if(img) updateData.image = img;
-             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scratch_activities', editingScratchId), updateData);
-             alert("更新成功");
-             setEditingScratchId(null);
-          } else {
-             if (!adminScratchTarget || adminScratchWinnerIndex === null) return alert("需設定中獎數字與位置");
-             const targetNum = parseInt(adminScratchTarget);
-             const grid = new Array(16).fill(0);
-             grid[adminScratchWinnerIndex] = targetNum;
-             const others = [];
-             for(let i=1; i<=16; i++) { if(i !== targetNum) others.push(i); }
-             others.sort(() => Math.random() - 0.5);
-             let otherIdx = 0;
-             for(let i=0; i<16; i++) { if(i !== adminScratchWinnerIndex) { grid[i] = others[otherIdx++]; } }
-             await addDoc(getPublicRef('scratch_activities'), { 
-                title: adminScratchTitle, prize: adminScratchPrize, cost: parseInt(adminScratchCost),
-                target: adminScratchTarget, grid: grid, image: img || "https://placehold.co/400x300/e2e8f0/64748b?text=Game", isActive: true, timestamp: serverTimestamp() 
-             });
-             alert("發布成功");
-          }
-          setAdminScratchTitle(''); setAdminScratchPrize(''); setAdminScratchCost(''); setAdminScratchTarget(''); setAdminScratchWinnerIndex(null); setAdminScratchImage(null);
-        } catch(e) { alert("操作失敗"); console.error(e); } finally { setIsAddingReward(false); }
-      };
-
-      const handleSaveGameSettings = async () => {
-         try {
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'games'), pendingSettings, { merge: true });
-            alert("遊戲設定已更新");
-         } catch(e) { alert("更新失敗"); }
-      };
-
-      const handleVerifyCoupon = async (couponId) => {
-        if (!confirm('確認核銷？')) return;
-        try {
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', couponId), { status: 'verified' });
-          alert("核銷成功");
-        } catch (e) { alert("失敗"); }
-      };
-
-      const updateAnnounce = async () => {
-        const newText = prompt("新公告內容：", announcement);
-        if (newText) await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'announce'), { text: newText });
-      };
-
-      // --- Wheel Game ---
       const handleSpinWheel = async () => {
         const cost = gameSettings.wheelCost || 20;
-        if(points < cost) return alert(`點數不足！需要 ${cost} 點`);
-        if(wheelSpinning) return;
-        if(!confirm(`花費 ${cost} 點轉動轉盤？`)) return;
-
-        try {
-           await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-cost), totalRedeemed: increment(cost) });
-           await addDoc(getPublicRef('submissions'), { description: `🎡 幸運大轉盤`, status: 'scratch', awardedPoints: -cost, timestamp: serverTimestamp(), userId: user.uid });
-        } catch(e) { return alert("扣點失敗"); }
-
+        if(points < cost || wheelSpinning) return;
         setWheelSpinning(true);
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-cost), totalRedeemed: increment(cost) });
         const randomDeg = Math.floor(Math.random() * 360) + 1800;
         setWheelRotation(randomDeg);
-
         setTimeout(async () => {
            setWheelSpinning(false);
-           const finalDeg = randomDeg % 360; 
-           const effectiveAngle = (360 - (finalDeg % 360)) % 360;
+           const effectiveAngle = (360 - (randomDeg % 360)) % 360;
            const segmentIndex = Math.floor(effectiveAngle / 60);
-           const segments = gameSettings.wheelSegments || [];
-           const winningSegment = segments[segmentIndex] || segments[0];
-           
-           alert(`結果：${winningSegment.label}`);
-           
-           if(winningSegment.type === 'point' && winningSegment.value > 0) {
-              await addDoc(getPublicRef('submissions'), { description: `🎡 轉盤中獎：${winningSegment.label}`, status: 'bonus', awardedPoints: winningSegment.value, timestamp: serverTimestamp(), userId: user.uid });
-              await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(winningSegment.value), totalIssued: increment(winningSegment.value) });
+           const win = gameSettings.wheelSegments[segmentIndex] || {label: "銘謝", value: 0};
+           alert(`轉盤結果：${win.label}`);
+           if(win.value > 0) {
+              await addDoc(getPublicRef('submissions'), { description: `🎡 轉盤獎勵：${win.label}`, status: 'bonus', awardedPoints: win.value, timestamp: serverTimestamp(), userId: user.uid });
+              await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(win.value), totalIssued: increment(win.value) });
            }
         }, 3000);
       };
 
-      // --- Bank ---
-      const handleDeposit = async () => {
-        const amount = parseInt(prompt("輸入存入點數："));
-        if(!amount || amount <= 0) return;
-        if(points < amount) return alert("點數不足");
-
-        try {
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-amount), totalRedeemed: increment(amount) });
-            await addDoc(getPublicRef('submissions'), { description: `🏦 存入小金庫`, status: 'deducted', awardedPoints: -amount, timestamp: serverTimestamp(), userId: user.uid });
-            const newBalance = (savings.balance || 0) + amount;
-            await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), {
-                balance: newBalance,
-                lastInterestTime: savings.lastInterestTime || serverTimestamp(),
-                lastDepositTime: serverTimestamp() 
-            }, { merge: true });
-            alert("存入成功");
-        } catch(e) { alert("失敗"); }
-      };
-
-      const handleWithdraw = async () => {
-        const lockHours = gameSettings.bankLockHours || 0;
-        if (savings.lastDepositTime) {
-            const depositTime = savings.lastDepositTime.seconds * 1000;
-            const now = Date.now();
-            const hoursPassed = (now - depositTime) / (1000 * 60 * 60);
-            if (hoursPassed < lockHours) {
-                return alert(`閉鎖期未滿！需等待 ${lockHours} 小時 (剩 ${(lockHours - hoursPassed).toFixed(1)} 小時)`);
-            }
-        }
-        const amount = parseInt(prompt("輸入提款點數："));
-        if(!amount || amount <= 0) return;
-        if((savings.balance || 0) < amount) return alert("餘額不足");
-
-        try {
-            const newBalance = (savings.balance || 0) - amount;
-            await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), { balance: newBalance }, { merge: true });
-            await addDoc(getPublicRef('submissions'), { description: `🏦 金庫提款`, status: 'bonus', awardedPoints: amount, timestamp: serverTimestamp(), userId: user.uid });
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(amount), totalIssued: increment(amount) });
-            alert("提款成功");
-        } catch(e) { alert("失敗"); }
-      };
-
-      const handleCollectInterest = async () => {
-        const lastTime = savings.lastInterestTime ? savings.lastInterestTime.seconds * 1000 : 0;
-        const now = Date.now();
-        if(now - lastTime < 86400000) return alert("每日只能領取一次利息");
-        const interest = Math.floor((savings.balance || 0) * (gameSettings.bankRate || 0.05));
-        if(interest <= 0) return alert("本金過低無利息");
-
-        try {
-            const newBalance = (savings.balance || 0) + interest;
-            await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), {
-                balance: newBalance, lastInterestTime: serverTimestamp()
-            }, { merge: true });
-            alert(`領取利息：${interest} 點`);
-        } catch(e) { alert("失敗"); }
-      };
-
-      // --- RPS Game ---
-      const handlePlayRPS = async (userChoice) => {
+      const handlePlayRPS = async (choice) => {
           const cost = gameSettings.rpsCost || 10;
-          if(points < cost) return alert(`點數不足！需要 ${cost} 點`);
-          if(rpsState === 'playing') return;
-
-          setRpsState('playing');
-          setRpsUserChoice(userChoice);
-          setRpsCpuChoice(null);
-          setRpsResult(null);
-
-          try {
-             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-cost), totalRedeemed: increment(cost) });
-             await addDoc(getPublicRef('submissions'), { description: `✊ 猜拳大對決`, status: 'scratch', awardedPoints: -cost, timestamp: serverTimestamp(), userId: user.uid });
-          } catch(e) { setRpsState('idle'); return alert("扣點失敗"); }
-
+          if(points < cost || rpsState === 'playing') return;
+          setRpsState('playing'); setRpsUserChoice(choice);
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-cost), totalRedeemed: increment(cost) });
           setTimeout(async () => {
-              const choices = ['rock', 'paper', 'scissors'];
-              const cpuChoice = choices[Math.floor(Math.random() * choices.length)];
-              setRpsCpuChoice(cpuChoice);
-
-              let result = 'draw';
-              if ((userChoice === 'rock' && cpuChoice === 'scissors') || (userChoice === 'paper' && cpuChoice === 'rock') || (userChoice === 'scissors' && cpuChoice === 'paper')) result = 'win';
-              else if (userChoice !== cpuChoice) result = 'lose';
-
-              setRpsResult(result);
-              
-              if (result === 'win') {
-                  const winPoints = Math.floor(cost * (gameSettings.rpsWinMultiplier || 2));
-                  await addDoc(getPublicRef('submissions'), { description: `✊ 猜拳獲勝`, status: 'bonus', awardedPoints: winPoints, timestamp: serverTimestamp(), userId: user.uid });
-                  await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(winPoints), totalIssued: increment(winPoints) });
-                  alert(`獲勝！贏得 ${winPoints} 點`);
-              } else if (result === 'draw') {
-                  await addDoc(getPublicRef('submissions'), { description: `✊ 猜拳平手退費`, status: 'bonus', awardedPoints: cost, timestamp: serverTimestamp(), userId: user.uid });
+              const cpu = ['rock', 'paper', 'scissors'][Math.floor(Math.random() * 3)];
+              setRpsCpuChoice(cpu);
+              let res = 'draw';
+              if((choice === 'rock' && cpu === 'scissors') || (choice === 'paper' && cpu === 'rock') || (choice === 'scissors' && cpu === 'paper')) res = 'win';
+              else if (choice !== cpu) res = 'lose';
+              if(res === 'win') {
+                  const winPts = cost * gameSettings.rpsWinMultiplier;
+                  await addDoc(getPublicRef('submissions'), { description: "✊ 猜拳獲勝", status: 'bonus', awardedPoints: winPts, timestamp: serverTimestamp(), userId: user.uid });
+                  await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(winPts), totalIssued: increment(winPts) });
+                  alert(`獲勝！贏得 ${winPts} 點`);
+              } else if (res === 'draw') {
                   await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(cost), totalIssued: increment(cost) });
-                  alert(`平手，退還 ${cost} 點`);
-              } else {
-                  alert(`惜敗...再接再厲`);
-              }
-              setTimeout(() => setRpsState('idle'), 2000);
+                  alert("平手！退費");
+              } else alert("輸了...下次再來");
+              setRpsState('idle');
           }, 1500);
       };
 
-      // --- Admin Helpers ---
-      const updateWheelSegment = (idx, field, val) => {
-          const newSegments = [...pendingSettings.wheelSegments];
-          newSegments[idx] = { ...newSegments[idx], [field]: val };
-          setPendingSettings({ ...pendingSettings, wheelSegments: newSegments });
+      const handleDeposit = async () => {
+        const amt = parseInt(prompt("存入金額:"));
+        if(!amt || points < amt) return;
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-amt), totalRedeemed: increment(amt) });
+        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), { balance: (savings.balance || 0) + amt, lastDepositTime: serverTimestamp() }, { merge: true });
+        alert("存入成功");
       };
 
-      const addMission = () => {
-          if(!newMissionTitle || !newMissionTarget || !newMissionReward) return;
-          const newMissions = [...(pendingSettings.missions || []), {
-              id: 'm' + Date.now(),
-              title: newMissionTitle,
-              type: newMissionType,
-              target: parseInt(newMissionTarget),
-              reward: parseInt(newMissionReward)
-          }];
-          setPendingSettings({ ...pendingSettings, missions: newMissions });
-          setNewMissionTitle(''); setNewMissionTarget(''); setNewMissionReward('');
-      };
+      const handleRedeem = async (r) => { if(points < r.cost) return alert("點數不足"); if(confirm(`兌換 ${r.name}?`)) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-r.cost), totalRedeemed: increment(r.cost) }); await addDoc(getPublicRef('submissions'), { description: `🎁 已兌換：${r.name}`, image: r.image, status: 'redeemed', awardedPoints: -r.cost, timestamp: serverTimestamp(), userId: user.uid }); alert("兌換成功"); } };
 
-      const removeMission = (idx) => {
-          const newMissions = [...pendingSettings.missions];
-          newMissions.splice(idx, 1);
-          setPendingSettings({ ...pendingSettings, missions: newMissions });
-      };
-
-      // --- Stats ---
-      const missionStats = useMemo(() => {
-         if(!user || submissions.length === 0) return { streak: 0, totalEarned: 0 };
-         const mySubs = submissions.filter(s => s.userId === user.uid);
-         const totalEarned = mySubs.reduce((acc, curr) => acc + (curr.awardedPoints > 0 ? curr.awardedPoints : 0), 0);
-         const checkins = mySubs.filter(s => s.status === 'checkin').map(s => new Date(s.timestamp?.seconds * 1000).toDateString());
-         const uniqueCheckins = [...new Set(checkins)].sort((a,b) => new Date(b) - new Date(a));
-         let streak = 0;
-         if(uniqueCheckins.length > 0) {
-             const today = new Date().toDateString();
-             const yesterday = new Date(Date.now() - 86400000).toDateString();
-             if(uniqueCheckins[0] === today || uniqueCheckins[0] === yesterday) {
-                 streak = 1;
-                 let currentDate = new Date(uniqueCheckins[0]);
-                 for(let i=1; i<uniqueCheckins.length; i++) {
-                     if(uniqueCheckins[i] === new Date(currentDate - 86400000).toDateString()) { streak++; currentDate = new Date(uniqueCheckins[i]); } else break;
-                 }
-             }
-         }
-         return { streak, totalEarned };
-      }, [submissions, user]);
-
-      const myCheckinPhotos = useMemo(() => {
-          return submissions.filter(s => s.status === 'checkin' && s.userId === user?.uid && s.image).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-      }, [submissions, user]);
-
-      const allCheckinPhotos = useMemo(() => {
-          return submissions.filter(s => s.status === 'checkin' && s.image).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-      }, [submissions]);
-
-      const unreadCount = user ? notifications.filter(n => !n.readBy?.includes(user.uid)).length : 0;
-      const myWishes = useMemo(() => rewards.filter(r => !r.available && (r.userId === user?.uid || !r.userId)), [rewards, user]);
+      const myCheckinPhotos = useMemo(() => submissions.filter(s => s.status === 'checkin' && s.userId === user?.uid && s.image).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)), [submissions, user]);
+      const allCheckinPhotos = useMemo(() => submissions.filter(s => s.status === 'checkin' && s.image).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)), [submissions]);
 
       if (loading) return null;
 
       return (
         <div className="max-w-md mx-auto shadow-2xl relative min-h-screen pb-24 sm:rounded-[40px] sm:my-4 sm:border-4 sm:border-slate-200 bg-[#f1f5f9] overflow-hidden flex flex-col no-scrollbar">
           
-          {/* Header */}
-          <div className="luxury-gradient p-6 pb-8 text-white rounded-b-[40px] shadow-lg shrink-0 z-10 relative">
+          <div className="luxury-gradient p-6 pb-8 text-white rounded-b-[40px] shadow-lg shrink-0 z-10">
             <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-3 pl-2">
-                <div className="w-1 h-6 bg-amber-400 rounded-full shadow-[0_0_10px_rgba(251,191,36,0.6)]"></div>
-                <h1 className="text-xl font-bold tracking-widest uppercase text-slate-100 font-serif">Point Premium</h1>
-              </div>
+              <div className="flex items-center gap-3 pl-2"><div className="w-1 h-6 bg-amber-400 rounded-full shadow-[0_0_10px_rgba(251,191,36,0.6)]"></div><h1 className="text-lg font-bold tracking-widest uppercase font-serif">Point Premium</h1></div>
               <div className="flex items-center gap-3">
-                <button onClick={() => setActiveTab('notifs')} className="relative p-2.5 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
-                  <Icon name="Bell" size={18} className="text-slate-300"/>
-                  {unreadCount > 0 && <span className="absolute top-2 right-2 bg-amber-500 w-2 h-2 rounded-full"></span>}
-                </button>
-                <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(!showAdminLogin)} className="p-2.5 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 active:scale-95 transition-all">
-                  <Icon name={isAdmin ? "LogOut" : "Lock"} size={18} className="text-slate-300"/>
-                </button>
+                <button onClick={() => setActiveTab('notifs')} className="relative p-2.5 bg-white/5 rounded-xl border border-white/10"><Icon name="Bell" size={18} className="text-slate-300"/></button>
+                <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(!showAdminLogin)} className="p-2.5 bg-white/5 rounded-xl border border-white/10"><Icon name={isAdmin ? "LogOut" : "Lock"} size={18} className="text-slate-300"/></button>
               </div>
             </div>
-            
-            <div className="flex justify-center mb-4">
-              <div className="point-display-card px-10 py-4 rounded-2xl flex flex-col items-center gap-1 min-w-[200px]">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">目前點數</span>
-                <span className="text-5xl font-bold text-white drop-shadow-md font-sans tracking-tight">{points}</span>
-              </div>
-            </div>
-            
-            <div className="bg-white/5 border border-white/5 rounded-xl px-4 py-2 marquee mx-2 backdrop-blur-sm">
-              <span className="text-[11px] font-light text-slate-300 tracking-wide">{announcement}</span>
-            </div>
-            
-            {showAdminLogin && !isAdmin && (
-              <div className="absolute top-24 right-6 bg-white p-6 rounded-2xl shadow-2xl z-50 w-64 text-slate-800 animate-in border border-slate-100">
-                <input type="password" placeholder="管理員密碼" className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl mb-3 text-sm focus:border-slate-400 outline-none transition-all text-center tracking-widest" value={adminPass} onChange={(e) => setAdminPass(e.target.value)} autoFocus />
-                <button onClick={checkAdmin} className="w-full btn-primary py-3 rounded-xl font-bold text-xs">驗證身份</button>
-              </div>
-            )}
+            <div className="flex justify-center mb-4"><div className="point-card px-10 py-4 rounded-2xl flex flex-col items-center min-w-[200px]"><span className="text-[10px] text-slate-400 uppercase tracking-widest">目前點數</span><span className="text-5xl font-bold text-white tracking-tight">{points}</span></div></div>
+            <div className="bg-white/5 border border-white/5 rounded-xl px-4 py-2 marquee mx-2 backdrop-blur-sm"><span className="text-[11px] font-light text-slate-300">{announcement}</span></div>
+            {showAdminLogin && !isAdmin && <div className="absolute top-24 right-6 bg-white p-6 rounded-2xl shadow-2xl z-50 w-64 text-slate-800 border animate-in"><input type="password" placeholder="Passcode" className="w-full bg-slate-50 border p-3 rounded-xl mb-3 text-center tracking-widest outline-none" value={adminPass} onChange={e => setAdminPass(e.target.value)} autoFocus /><button onClick={checkAdmin} className="w-full btn-primary py-3 rounded-xl font-bold text-xs uppercase">Verify</button></div>}
           </div>
 
           <div className="p-6 flex-1 overflow-y-auto no-scrollbar space-y-8">
             
-            {/* Activities Tab */}
-            {activeTab === 'activities' && (
-              <div className="space-y-6 animate-in">
-                {currentActivity === 'scratch_game' && selectedScratchGame ? (
-                  // Scratch Game View
-                  <div className="luxury-card p-6 rounded-[30px] animate-in">
-                    <button onClick={() => {setCurrentActivity('scratch_list'); setCanScratchNow(false);}} className="mb-4 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> 返回</button>
-                    <div className="text-center mb-8">
-                      <h2 className="font-bold text-slate-800 text-xl mb-1">{selectedScratchGame.title}</h2>
-                      <p className="text-xs text-slate-400 font-medium">入場費：<span className="text-amber-600 font-bold">{selectedScratchGame.cost} P</span></p>
-                    </div>
-                    {!canScratchNow ? (
-                      <div className="text-center py-10">
-                        <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-full mx-auto flex items-center justify-center text-slate-300 mb-6 shadow-inner"><Icon name="Lock" size={32}/></div>
-                        <button onClick={() => handlePayToScratch(selectedScratchGame)} className="w-full btn-primary py-4 font-bold shadow-lg">購買入場券</button>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-4 gap-2.5">
-                          {selectedScratchGame.grid.map((val, i) => {
-                           const isRevealed = currentGameProgress.includes(i);
-                           return <ScratchCell key={i} value={val} canScratch={canScratchNow && !isRevealed} isRevealed={isRevealed} onRevealed={(v) => handleRevealed(v, selectedScratchGame, i)} />;
-                          })}
-                      </div>
-                    )}
-                  </div>
-                ) : currentActivity === 'scratch_list' ? (
-                  // Scratch List
-                  <div className="animate-in">
-                    <button onClick={() => setCurrentActivity(null)} className="mb-4 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> 大廳</button>
-                    <h3 className="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">刮刮樂遊戲</h3>
-                    {scratchActivities.length === 0 ? (
-                      <div className="text-center py-12 bg-white rounded-[24px] border border-dashed border-slate-200 text-slate-400 text-xs font-light">目前沒有活動</div>
-                    ) : (
-                      <div className="space-y-3">
-                        {scratchActivities.map(game => (
-                          <div key={game.id} onClick={() => {setSelectedScratchGame(game); setCurrentActivity('scratch_game');}} className="bg-white p-4 rounded-[20px] border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-4 cursor-pointer group">
-                             <div className="w-14 h-14 rounded-2xl bg-slate-100 overflow-hidden shrink-0 border border-slate-100">
-                               {game.image && <img src={game.image} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"/>}
-                             </div>
-                             <div className="flex-1 min-w-0">
-                               <h4 className="font-bold text-slate-700 text-sm truncate">{game.title}</h4>
-                               <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">大獎: {game.prize}</p>
-                             </div>
-                             <div className="bg-slate-50 text-slate-600 border border-slate-100 px-3 py-1.5 rounded-lg text-xs font-bold">{game.cost} P</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : currentActivity === 'wheel' ? (
-                   // Wheel View
-                   <div className="luxury-card p-6 rounded-[30px] animate-in flex flex-col items-center">
-                     <button onClick={() => setCurrentActivity(null)} className="self-start mb-4 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> 大廳</button>
-                     <h2 className="font-bold text-slate-800 text-xl mb-8 flex items-center gap-2">幸運大轉盤</h2>
-                     
-                     <div className="relative w-64 h-64 mb-10">
-                       <div className="w-full h-full rounded-full border-[8px] border-white shadow-2xl overflow-hidden relative transition-transform duration-[3000ms] cubic-bezier(0.2, 0.8, 0.2, 1)" style={{
-                         transform: `rotate(${wheelRotation}deg)`,
-                         background: `conic-gradient(
-                           ${gameSettings.wheelSegments[0].color} 0deg 60deg, 
-                           ${gameSettings.wheelSegments[1].color} 60deg 120deg, 
-                           ${gameSettings.wheelSegments[2].color} 120deg 180deg, 
-                           ${gameSettings.wheelSegments[3].color} 180deg 240deg, 
-                           ${gameSettings.wheelSegments[4].color} 240deg 300deg, 
-                           ${gameSettings.wheelSegments[5].color} 300deg 360deg
-                         )`
-                       }}>
-                          {/* 6 Segments Text */}
-                          {gameSettings.wheelSegments.map((seg, i) => (
-                             <div key={i} className="wheel-segment" style={{ transform: `rotate(${i * 60}deg)` }}>
-                                <span className="wheel-text" style={{ transform: 'rotate(30deg) translate(0, -75px)' }}>{seg.label}</span>
-                             </div>
-                          ))}
-                       </div>
-                       <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-3 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-slate-800 z-10 drop-shadow-md"></div>
-                       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-md z-10 border-2 border-slate-100"></div>
-                     </div>
-                     
-                     <button onClick={handleSpinWheel} disabled={wheelSpinning} className={`btn-primary w-full py-4 shadow-lg text-sm ${wheelSpinning ? 'opacity-80' : ''}`}>
-                       {wheelSpinning ? '轉動中...' : `立即旋轉 (${gameSettings.wheelCost} P)`}
-                     </button>
-                   </div>
-                ) : currentActivity === 'bank' ? (
-                   // Bank View
-                   <div className="luxury-card p-6 rounded-[30px] animate-in">
-                      <button onClick={() => setCurrentActivity(null)} className="mb-6 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> 大廳</button>
-                      <div className="luxury-gold-gradient rounded-[24px] p-8 text-white text-center shadow-lg mb-8 relative overflow-hidden">
-                         <div className="absolute -right-6 -bottom-6 opacity-20 text-black"><Icon name="PiggyBank" size={120}/></div>
-                         <p className="text-[10px] font-bold text-amber-900/60 uppercase tracking-[0.2em] mb-2">金庫總額</p>
-                         <p className="text-5xl font-bold text-amber-900 drop-shadow-sm">{savings.balance || 0}</p>
-                         <div className="mt-4 flex justify-center gap-4 text-[10px] font-bold text-amber-900/70">
-                            <span className="bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">利率: {gameSettings.bankRate * 100}% /日</span>
-                            <span className="bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">閉鎖: {gameSettings.bankLockHours}hr</span>
-                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 mb-6">
-                         <button onClick={handleDeposit} className="bg-slate-50 text-slate-600 py-4 rounded-xl font-bold text-xs hover:bg-slate-100 border border-slate-200">存款</button>
-                         <button onClick={handleWithdraw} className="bg-slate-50 text-slate-600 py-4 rounded-xl font-bold text-xs hover:bg-slate-100 border border-slate-200">提款</button>
-                      </div>
-
-                      <button onClick={handleCollectInterest} className="w-full py-4 border border-amber-300 text-amber-600 rounded-xl font-bold text-xs hover:bg-amber-50 flex items-center justify-center gap-2 transition-colors">
-                         <Icon name="Sparkles" size={14}/> 領取利息
-                      </button>
-                   </div>
-                ) : currentActivity === 'rps' ? (
-                   // RPS View
-                   <div className="luxury-card p-6 rounded-[30px] animate-in text-center">
-                      <button onClick={() => setCurrentActivity(null)} className="self-start mb-6 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> 大廳</button>
-                      <h2 className="font-bold text-slate-800 text-xl mb-2 flex items-center justify-center gap-2">猜拳大對決</h2>
-                      
-                      <div className="bg-slate-50 p-4 rounded-xl mb-8 border border-slate-100">
-                         <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wide">
-                            <span>費用: {gameSettings.rpsCost} P</span>
-                            <span>獲勝: {gameSettings.rpsWinMultiplier}倍</span>
-                         </div>
-                      </div>
-
-                      <div className="flex justify-center items-center gap-10 my-10 h-24">
-                         <div className={`text-5xl transition-transform duration-300 ${rpsState === 'playing' ? 'animate-bounce-hand' : ''}`}>
-                            {rpsUserChoice === 'rock' ? '✊' : rpsUserChoice === 'paper' ? '🖐️' : rpsUserChoice === 'scissors' ? '✌️' : '❓'}
-                            <p className="text-[9px] text-slate-300 mt-3 font-bold uppercase tracking-widest">你</p>
-                         </div>
-                         <div className="text-xl font-bold text-slate-200 italic">VS</div>
-                         <div className={`text-5xl transition-transform duration-300 ${rpsState === 'playing' ? 'animate-bounce-hand' : ''}`}>
-                            {rpsCpuChoice === 'rock' ? '✊' : rpsCpuChoice === 'paper' ? '🖐️' : rpsCpuChoice === 'scissors' ? '✌️' : '❓'}
-                            <p className="text-[9px] text-slate-300 mt-3 font-bold uppercase tracking-widest">店長</p>
-                         </div>
-                      </div>
-
-                      {rpsState === 'idle' && (
-                         <div className="grid grid-cols-3 gap-4">
-                            <button onClick={() => handlePlayRPS('rock')} className="bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all text-3xl py-5 rounded-2xl">✊</button>
-                            <button onClick={() => handlePlayRPS('paper')} className="bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all text-3xl py-5 rounded-2xl">🖐️</button>
-                            <button onClick={() => handlePlayRPS('scissors')} className="bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all text-3xl py-5 rounded-2xl">✌️</button>
-                         </div>
-                      )}
-                   </div>
-                ) : currentActivity === 'missions' ? (
-                   // Missions View
-                   <div className="luxury-card p-6 rounded-[30px] animate-in">
-                      <button onClick={() => setCurrentActivity(null)} className="mb-6 text-slate-400 hover:text-slate-600 flex items-center text-xs font-bold uppercase tracking-wider"><Icon name="ArrowLeft" size={14} className="mr-1"/> 大廳</button>
-                      <h2 className="font-bold text-slate-800 text-xl mb-6 flex items-center gap-2">任務佈告欄</h2>
-                      
-                      <div className="space-y-4">
-                         {gameSettings.missions && gameSettings.missions.map(m => {
-                            let progress = 0;
-                            if(m.type === 'streak') progress = missionStats.streak;
-                            if(m.type === 'total') progress = missionStats.totalEarned;
-                            const pct = Math.min(progress / m.target * 100, 100);
-                            
-                            return (
-                               <div key={m.id} className="bg-white p-5 rounded-[20px] border border-slate-100 shadow-sm flex items-center gap-5">
-                                  <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-xl shadow-inner border border-slate-100">
-                                     {m.type === 'streak' ? '🔥' : '🏆'}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                     <div className="flex justify-between items-center mb-2">
-                                        <p className="text-sm font-bold text-slate-700 truncate">{m.title}</p>
-                                        <span className="text-xs font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md">+{m.reward}P</span>
-                                     </div>
-                                     <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                        <div className="bg-slate-800 h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%` }}></div>
-                                     </div>
-                                     <p className="text-[10px] text-slate-400 mt-1.5 font-medium">{progress} / {m.target}</p>
-                                  </div>
-                               </div>
-                            );
-                         })}
-                      </div>
-                   </div>
-                ) : (
-                  // Main Lobby
-                  <>
-                    <h2 className="text-lg font-bold text-slate-800 mb-6 px-2 tracking-wide">活動大廳</h2>
-                    
-                    <div className="luxury-card p-5 rounded-[24px] flex items-center gap-5 mb-8">
-                       <label className={`w-16 h-16 rounded-2xl border border-dashed flex flex-col items-center justify-center cursor-pointer transition-colors shrink-0 ${checkInImage ? 'border-amber-400 bg-amber-50 text-amber-600' : 'border-slate-300 text-slate-300 hover:border-slate-400'}`}>
-                          <Icon name="Camera" size={20}/>
-                          <input type="file" accept="image/*" className="hidden" onChange={(e) => setCheckInImage(e.target.files[0])} />
-                       </label>
-                       <div className="flex-1">
-                          <p className="font-bold text-slate-800 text-sm">每日打卡</p>
-                          <p className="text-[10px] text-slate-400 mt-1">上傳指甲照片可獲得 {gameSettings.checkInPoints} P</p>
-                       </div>
-                       <button onClick={handleCheckIn} disabled={isCheckingIn} className={`px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all ${!checkInImage ? 'bg-slate-100 text-slate-400' : 'bg-slate-800 text-white hover:bg-slate-900'}`}>
-                         打卡
-                       </button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                       <div onClick={() => setCurrentActivity('scratch_list')} className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100 cursor-pointer hover:shadow-md transition-all group h-36 flex flex-col justify-between relative overflow-hidden">
-                          <div className="absolute -right-4 -top-4 w-20 h-20 bg-slate-50 rounded-full group-hover:scale-110 transition-transform"></div>
-                          <Icon name="Ticket" size={24} className="text-slate-700 relative z-10"/>
-                          <div className="relative z-10">
-                             <p className="font-bold text-slate-700 text-sm">刮刮樂</p>
-                             <p className="text-[10px] text-slate-400 mt-0.5">試試手氣</p>
-                          </div>
-                       </div>
-
-                       <div onClick={() => setCurrentActivity('wheel')} className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100 cursor-pointer hover:shadow-md transition-all group h-36 flex flex-col justify-between relative overflow-hidden">
-                          <div className="absolute -right-4 -top-4 w-20 h-20 bg-indigo-50 rounded-full group-hover:scale-110 transition-transform"></div>
-                          <Icon name="Disc" size={24} className="text-indigo-600 relative z-10"/>
-                          <div className="relative z-10">
-                             <p className="font-bold text-slate-700 text-sm">幸運轉盤</p>
-                             <p className="text-[10px] text-slate-400 mt-0.5">贏取倍率獎金</p>
-                          </div>
-                       </div>
-
-                       <div onClick={() => setCurrentActivity('rps')} className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100 cursor-pointer hover:shadow-md transition-all group h-36 flex flex-col justify-between relative overflow-hidden">
-                          <div className="absolute -right-4 -top-4 w-20 h-20 bg-pink-50 rounded-full group-hover:scale-110 transition-transform"></div>
-                          <Icon name="Hand" size={24} className="text-pink-500 relative z-10"/>
-                          <div className="relative z-10">
-                             <p className="font-bold text-slate-700 text-sm">猜拳對決</p>
-                             <p className="text-[10px] text-slate-400 mt-0.5">以小博大</p>
-                          </div>
-                       </div>
-
-                       <div onClick={() => setCurrentActivity('bank')} className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100 cursor-pointer hover:shadow-md transition-all group h-36 flex flex-col justify-between relative overflow-hidden">
-                          <div className="absolute -right-4 -top-4 w-20 h-20 bg-emerald-50 rounded-full group-hover:scale-110 transition-transform"></div>
-                          <Icon name="PiggyBank" size={24} className="text-emerald-600 relative z-10"/>
-                          <div className="relative z-10">
-                             <p className="font-bold text-slate-700 text-sm">小金庫</p>
-                             <p className="text-[10px] text-slate-400 mt-0.5">存點生利息</p>
-                          </div>
-                       </div>
-                    </div>
-
-                    <div onClick={() => setCurrentActivity('missions')} className="mt-6 luxury-gold-gradient p-6 rounded-[24px] shadow-lg text-white flex items-center justify-between cursor-pointer hover:shadow-xl transition-all relative overflow-hidden group">
-                       <div className="relative z-10">
-                          <p className="font-bold text-amber-900 text-sm flex items-center gap-2"><Icon name="Target" size={16}/> 任務佈告欄</p>
-                          <p className="text-[10px] text-amber-900/70 mt-1 font-medium">達成目標即可領取獎勵</p>
-                       </div>
-                       <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm group-hover:translate-x-1 transition-transform">
-                          <Icon name="ArrowLeft" size={16} className="rotate-180 text-amber-900"/>
-                       </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Home Tab */}
             {activeTab === 'home' && (
               <div className="space-y-8 animate-in">
-                <div className="luxury-card p-6 rounded-[30px]">
-                  <h3 className="font-bold text-slate-800 mb-4 flex gap-2 items-center"><Icon name="Plus" size={18} className="text-slate-400"/> 賺取點數</h3>
-                  <textarea className="w-full bg-slate-50 border border-slate-200 p-4 rounded-[16px] text-sm min-h-[100px] outline-none focus:border-slate-400 transition-all text-slate-600 placeholder:text-slate-300" placeholder="今天有什麼值得加點的呢..." value={desc} onChange={(e) => setDesc(e.target.value)} />
-                  <div className="flex gap-4 mt-6">
-                    <label className={`flex-[1.5] cursor-pointer py-4 rounded-xl flex items-center justify-center border border-dashed transition-all ${selectedFile ? 'border-amber-400 bg-amber-50 text-amber-600' : 'border-slate-300 text-slate-300 hover:border-slate-400'}`}>
-                      <Icon name="Image" size={16} className="mr-2"/> <span className="text-xs font-bold">{selectedFile ? '已選擇' : '上傳證明'}</span>
-                      <input type="file" accept="image/*" className="hidden" onChange={(e) => setSelectedFile(e.target.files[0])} />
+                <div className="luxury-card p-6 rounded-[30px] space-y-4">
+                  <h3 className="font-bold text-slate-800 flex items-center gap-2"><Icon name="Plus" size={16}/> 賺取點數</h3>
+                  <textarea className="w-full bg-slate-50 border p-4 rounded-2xl text-sm min-h-[100px] outline-none" placeholder="描述您的活動..." value={desc} onChange={e => setDesc(e.target.value)} />
+                  <div className="flex gap-3">
+                    <label className={`flex-1 cursor-pointer py-4 rounded-xl flex items-center justify-center border border-dashed transition-all ${selectedFile ? 'border-amber-400 bg-amber-50 text-amber-600' : 'text-slate-400'}`}>
+                      <Icon name="Image" size={16} className="mr-2"/> <span className="font-bold text-xs">{selectedFile ? '已選擇' : '附圖'}</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={e => setSelectedFile(e.target.files[0])} />
                     </label>
-                    <button onClick={handleUploadTask} disabled={isUploading} className="flex-1 btn-primary py-4 rounded-xl font-bold text-xs shadow-md">送出申請</button>
+                    <button onClick={handleUploadTask} className="flex-1 btn-primary py-4 rounded-xl font-bold text-xs">送出申請</button>
                   </div>
+                </div>
+
+                <div className="luxury-card p-5 rounded-[24px] flex items-center gap-4">
+                    <label className={`w-16 h-16 rounded-2xl border border-dashed flex flex-col items-center justify-center shrink-0 ${checkInImage ? 'border-amber-400 bg-amber-50 text-amber-600' : 'text-slate-300'}`}>
+                       <Icon name="Camera" size={20}/>
+                       <input type="file" accept="image/*" className="hidden" onChange={e => setCheckInImage(e.target.files[0])} />
+                    </label>
+                    <div className="flex-1"><p className="font-bold text-sm">每日打卡</p><p className="text-[10px] text-slate-400">上傳指甲美照領 {gameSettings.checkInPoints} P</p></div>
+                    <button onClick={handleCheckIn} className={`px-5 py-2 rounded-xl text-xs font-bold ${!checkInImage ? 'bg-slate-100 text-slate-400' : 'btn-primary'}`}>打卡</button>
                 </div>
 
                 {myCheckinPhotos.length > 0 && (
-                  <div>
-                     <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-4 flex items-center gap-2"><Icon name="Image" size={14}/> 我的打卡相簿</h3>
-                     <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-4">
+                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">我的打卡相簿</h3>
+                    <div className="grid grid-cols-3 gap-3">
                         {myCheckinPhotos.map(c => (
-                           <div key={c.id} className="aspect-square rounded-xl overflow-hidden relative shadow-sm group">
-                              <img src={c.image} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-80"></div>
-                              <div className="absolute bottom-2 left-0 w-full text-center">
-                                 <span className="text-[9px] text-white/90 font-medium bg-white/10 px-2 py-0.5 rounded-full backdrop-blur-sm">
-                                    {c.timestamp ? new Date(c.timestamp.seconds * 1000).toLocaleDateString(undefined, {month:'numeric', day:'numeric'}) : ''}
-                                 </span>
+                           <div key={c.id} className="aspect-square rounded-xl overflow-hidden relative shadow-sm border border-white">
+                              <img src={c.image} className="w-full h-full object-cover" />
+                              <div className="absolute bottom-0 w-full bg-black/40 text-white text-[8px] py-1 backdrop-blur-sm text-center">
+                                 {c.timestamp ? new Date(c.timestamp.seconds * 1000).toLocaleDateString(undefined, {month:'numeric', day:'numeric'}) : ''}
                               </div>
                            </div>
                         ))}
-                     </div>
+                    </div>
                   </div>
                 )}
 
                 <div className="space-y-4">
-                   <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2"><Icon name="Ticket" size={14}/> 我的兌換券</h3>
-                   <div className="flex flex-col gap-3">
-                     {submissions.filter(s => s.status === 'redeemed' || s.status === 'verified').length === 0 && <p className="text-center text-[11px] text-slate-300 py-8 bg-white rounded-[24px] border border-dashed border-slate-200 font-light">目前沒有兌換券</p>}
-                     {submissions.filter(s => s.status === 'redeemed' || s.status === 'verified').map(coupon => (
-                       <div key={coupon.id} className={`coupon-card p-4 flex items-center gap-4 ${coupon.status === 'verified' ? 'coupon-used' : ''}`}>
-                         <div className="w-12 h-12 bg-slate-50 rounded-xl overflow-hidden shrink-0 border border-slate-100">
-                           {coupon.image && <img src={coupon.image} className="w-full h-full object-cover" />}
-                         </div>
-                         <div className="flex-1 min-w-0">
-                           <p className="text-sm font-bold text-slate-700 truncate">{coupon.description.replace('🎁 已兌換：', '').replace('🎁 刮刮樂中獎：', '')}</p>
-                           <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wide">{coupon.status === 'verified' ? '已核銷' : '可使用'}</p>
-                         </div>
-                         <button onClick={() => deleteItem('submissions', coupon.id, 'Record')} className="text-slate-300 hover:text-red-400 transition-colors p-2"><Icon name="Trash2" size={16}/></button>
-                       </div>
-                     ))}
-                   </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2"><Icon name="History" size={14}/> 歷史紀錄</h3>
+                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">點數明細</h3>
                   <div className="luxury-card rounded-[24px] overflow-hidden">
-                    {submissions.length === 0 ? <p className="text-center text-[11px] text-slate-300 py-8 font-light">無紀錄</p> : (
-                      <div className="flex flex-col">
-                        {submissions.filter(s => ['pending', 'approved', 'deducted', 'redeemed', 'scratch', 'checkin', 'bonus', 'rejected'].includes(s.status)).map(item => (
-                          <div key={item.id} className="p-4 flex justify-between items-center border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-                            <div className="flex flex-col min-w-0 pr-4">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{item.timestamp ? new Date(item.timestamp.seconds * 1000).toLocaleDateString() : '剛剛'}</span>
-                              <div className="text-xs font-medium text-slate-600 truncate">
-                                {item.description.replace('🎁 已兌換：', '兌換: ').replace('⚠️ 扣點：', '扣點: ').replace('🎲 參加', '活動: ').replace('🎁 刮刮樂中獎：', '中獎: ').replace('🎁 系統補給：', '補給: ')}
-                                {item.status === 'rejected' && <span className="text-red-400 block text-[9px] mt-1">原因: {item.rejectionReason}</span>}
-                              </div>
-                            </div>
-                            <div className={`text-xs font-bold shrink-0 ${item.status === 'rejected' ? 'text-slate-300' : item.status === 'pending' ? 'text-amber-400' : (item.awardedPoints > 0 ? 'text-emerald-500' : 'text-red-400')}`}>
-                              {item.status === 'rejected' ? '拒絕' : item.status === 'pending' ? '審核中' : (item.awardedPoints > 0 ? `+${item.awardedPoints}` : item.awardedPoints)}
-                            </div>
+                    {submissions.length === 0 ? <p className="text-center text-xs py-10 text-slate-300">目前無紀錄</p> : submissions.filter(s => ['pending', 'approved', 'deducted', 'redeemed', 'checkin', 'bonus', 'rejected'].includes(s.status)).map(item => (
+                       <div key={item.id} className="p-4 flex justify-between items-center border-b last:border-0">
+                          <div className="flex flex-col min-w-0 pr-4">
+                             <span className="text-[9px] text-slate-400 font-bold">{item.timestamp ? new Date(item.timestamp.seconds * 1000).toLocaleDateString() : '剛剛'}</span>
+                             <div className="text-xs font-medium text-slate-700 truncate">{item.description}</div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Rewards Tab */}
-            {activeTab === 'rewards' && (
-              <div className="space-y-8 animate-in">
-                <div className="luxury-card p-6 rounded-[30px]">
-                  <h3 className="font-bold text-slate-800 mb-4 flex gap-2 items-center"><Icon name="Sparkles" size={18} className="text-slate-400"/> 許願池</h3>
-                  <p className="text-xs text-slate-400 mb-4 font-light">想要什麼？許願讓店長上架！</p>
-                  <div className="space-y-4">
-                     <input className="settings-input" placeholder="我想要..." value={wishName} onChange={(e) => setWishName(e.target.value)} />
-                     <div className="flex gap-3">
-                         <label className={`flex-1 cursor-pointer py-3 rounded-xl flex items-center justify-center border border-dashed transition-all ${wishImage ? 'border-amber-400 bg-amber-50 text-amber-600' : 'border-slate-300 text-slate-300 hover:border-slate-400'}`}>
-                            <Icon name="Image" size={16} className="mr-2"/> <span className="text-xs font-bold">{wishImage ? '已選圖' : '附圖'}</span>
-                            <input type="file" accept="image/*" className="hidden" onChange={(e) => setWishImage(e.target.files[0])} />
-                         </label>
-                         <button onClick={handleMakeWish} disabled={isWishing} className="flex-[2] btn-primary rounded-xl font-bold text-xs shadow-md">{isWishing ? '許願中...' : '送出願望'}</button>
-                     </div>
-                  </div>
-                </div>
-
-                {myWishes.length > 0 && (
-                  <div className="mb-2">
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-3 flex items-center gap-2"><Icon name="Sparkles" size={14}/> 審核中的願望</h3>
-                    <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
-                      {myWishes.map(wish => (
-                        <div key={wish.id} className="min-w-[100px] w-[100px] flex-shrink-0 group">
-                           <div className="w-full h-24 rounded-2xl bg-white overflow-hidden mb-2 relative border border-slate-100 shadow-sm">
-                              {wish.image && <img src={wish.image} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />}
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/5">
-                                 <span className="text-[9px] bg-white/90 text-slate-600 px-2 py-1 rounded-full shadow-sm font-bold">審核中</span>
-                              </div>
-                           </div>
-                           <p className="text-xs font-bold text-slate-600 truncate text-center">{wish.name}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-4 flex items-center gap-2"><Icon name="Store" size={14}/> 兌換商店</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                        {rewards.filter(r => r.available).map(item => (
-                            <div key={item.id} className="luxury-card p-3 rounded-[24px] flex flex-col relative group hover:-translate-y-1 transition-transform duration-300">
-                                <div className="aspect-[4/3] bg-slate-50 rounded-[18px] mb-3 overflow-hidden relative border border-slate-50">
-                                    {item.image && <img src={item.image} className="w-full h-full object-cover" />}
-                                    <div className="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-sm">
-                                        {item.cost} P
-                                    </div>
-                                </div>
-                                <h4 className="font-bold text-slate-700 text-sm mb-2 truncate px-1">{item.name}</h4>
-                                <button onClick={() => handleRedeem(item)} className="mt-auto w-full py-2.5 bg-slate-100 text-slate-500 hover:bg-slate-800 hover:text-white transition-all rounded-xl text-xs font-bold">立即兌換</button>
-                                {isAdmin && (
-                                    <div onClick={(e) => { e.stopPropagation(); deleteItem('rewards', item.id, item.name); }} className="delete-badge hover:bg-red-500 transition-colors"><Icon name="Trash2" size={12}/></div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                    {rewards.filter(r => r.available).length === 0 && (
-                        <div className="text-center py-16 text-slate-300 text-xs font-light bg-white rounded-[30px] border border-dashed border-slate-200">
-                           目前架上沒有商品
-                        </div>
-                    )}
-                </div>
-              </div>
-            )}
-            
-            {/* Notifications Tab */}
-            {activeTab === 'notifs' && (
-                <div className="space-y-4 animate-in">
-                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-2 mb-2">通知中心</h3>
-                    {notifications.length === 0 ? (
-                        <div className="text-center py-20 text-slate-300 text-xs font-light">暫無新通知</div>
-                    ) : (
-                        notifications.map(n => (
-                            <div key={n.id} className="bg-white p-5 rounded-[24px] border border-slate-100 shadow-sm">
-                                <div className="flex justify-between items-start mb-1">
-                                     <h4 className="font-bold text-slate-700 text-sm">{n.title}</h4>
-                                     <span className="text-[10px] text-slate-300">{n.timestamp ? new Date(n.timestamp.seconds * 1000).toLocaleDateString() : ''}</span>
-                                </div>
-                                <p className="text-xs text-slate-500 leading-relaxed font-light">{n.message}</p>
-                            </div>
-                        ))
-                    )}
-                </div>
-            )}
-
-            {/* Admin Tab */}
-            {activeTab === 'admin' && isAdmin && (
-              <div className="space-y-8 pb-10 animate-in">
-                {/* Stats */}
-                <div className="luxury-gradient p-6 rounded-[30px] text-white shadow-lg relative overflow-hidden">
-                  <div className="absolute -right-4 -bottom-4 opacity-10 rotate-12"><Icon name="Chart" size={120}/></div>
-                  <h2 className="text-sm font-bold flex gap-2 items-center mb-6 text-slate-200"><Icon name="Chart" size={18}/> 營運儀表板</h2>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
-                      <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mb-1">已發放</p>
-                      <p className="text-2xl font-bold">{stats.totalIssued}</p>
-                    </div>
-                    <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
-                      <p className="text-[9px] font-bold text-slate-300 uppercase tracking-widest mb-1">已回收</p>
-                      <p className="text-2xl font-bold">{stats.totalRedeemed}</p>
-                    </div>
-                  </div>
-                  <button onClick={updateAnnounce} className="w-full mt-4 bg-white/10 py-3 rounded-xl text-[10px] font-bold hover:bg-white/20 transition-colors">修改跑馬燈公告</button>
-                </div>
-
-                {!adminMonitoringGame && (
-                  <>
-                  {/* Pending Actions */}
-                  <div className="space-y-4">
-                    <h3 className="text-[9px] font-bold text-slate-400 px-3 uppercase tracking-[0.2em] flex items-center gap-2"><Icon name="Alert" size={14} className="text-amber-500"/> 待審核項目</h3>
-                    {submissions.filter(s => s.status === 'pending').length === 0 ? <p className="text-center text-[10px] text-slate-300 py-4 font-light bg-white rounded-xl border border-dashed border-slate-200">目前沒有待審核項目</p> : 
-                      submissions.filter(s => s.status === 'pending').map(sub => (
-                      <div key={sub.id} className="bg-white p-6 rounded-[30px] border border-amber-100 shadow-sm border-l-4 border-l-amber-300">
-                        {sub.image && <div className="w-full h-48 mb-5 overflow-hidden rounded-[20px] bg-slate-50 border border-slate-100 shadow-inner"><img src={sub.image} className="w-full h-full object-cover" /></div>}
-                        <p className="text-sm font-bold text-slate-700 mb-6 text-center italic">"{sub.description}"</p>
-                        <div className="flex flex-col gap-3 mb-4">
-                           <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                              <span className="text-xs font-bold text-slate-400 shrink-0">發放:</span>
-                              <input type="number" className="w-full bg-transparent border-none text-sm font-bold text-slate-700 outline-none" placeholder="10" value={approvalPoints[sub.id] || ''} onChange={(e) => setApprovalPoints({ ...approvalPoints, [sub.id]: e.target.value })} />
-                           </div>
-                           <div className="flex items-center gap-4 bg-red-50 p-3 rounded-xl border border-red-100">
-                              <span className="text-xs font-bold text-red-300 shrink-0">原因:</span>
-                              <input className="w-full bg-transparent border-none text-sm font-medium text-red-500 placeholder-red-200 outline-none" placeholder="拒絕原因" value={rejectionReasons[sub.id] || ''} onChange={(e) => setRejectionReasons({ ...rejectionReasons, [sub.id]: e.target.value })} />
-                           </div>
-                        </div>
-                        <div className="flex gap-3">
-                          <button onClick={() => handleReject(sub)} className="flex-1 py-3 bg-red-50 text-red-500 hover:bg-red-100 rounded-[14px] text-[10px] font-bold transition-colors">拒絕</button>
-                          <button onClick={() => handleApprove(sub, approvalPoints[sub.id] || 10)} className="flex-[2.5] btn-primary py-3 rounded-[14px] text-[10px] font-bold tracking-widest shadow-lg">核准</button>
-                        </div>
-                      </div>
+                          <div className={`text-xs font-bold ${item.status==='rejected' ? 'text-slate-300' : item.status==='pending' ? 'text-amber-500' : (item.awardedPoints > 0 ? 'text-emerald-600' : 'text-rose-600')}`}>
+                             {item.status==='rejected' ? '不核准' : item.status==='pending' ? '審核中' : (item.awardedPoints > 0 ? `+${item.awardedPoints}` : item.awardedPoints)}
+                          </div>
+                       </div>
                     ))}
                   </div>
-
-                  {/* Member Check-in Gallery */}
-                  <div className="space-y-4">
-                     <h3 className="text-[9px] font-bold text-slate-400 px-3 uppercase tracking-[0.2em] flex items-center gap-2"><Icon name="Image" size={14} className="text-rose-400"/> 會員打卡牆 (監控)</h3>
-                     {allCheckinPhotos.length === 0 ? <p className="text-center text-[10px] text-slate-300 py-4 font-light bg-white rounded-xl border border-dashed border-slate-200">尚無打卡照片</p> : 
-                     <div className="grid grid-cols-3 gap-3">
-                        {allCheckinPhotos.map(c => (
-                           <div key={c.id} className="aspect-square rounded-xl overflow-hidden relative shadow-sm group border border-slate-200">
-                              <img src={c.image} className="w-full h-full object-cover" />
-                              <div className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md" onClick={(e) => { e.stopPropagation(); deleteItem('submissions', c.id, '這張照片'); }}>
-                                 <Icon name="Trash2" size={12}/>
-                              </div>
-                              <div className="absolute bottom-0 w-full bg-black/50 text-white text-[8px] text-center py-1 backdrop-blur-sm truncate px-1">
-                                 {c.timestamp ? new Date(c.timestamp.seconds * 1000).toLocaleDateString() : ''}
-                              </div>
-                           </div>
-                        ))}
-                     </div>}
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="text-[9px] font-bold text-slate-400 px-3 uppercase tracking-[0.2em] flex items-center gap-2"><Icon name="Ticket" size={14} className="text-emerald-500"/> 待核銷票券</h3>
-                    {submissions.filter(s => s.status === 'redeemed').length === 0 ? <p className="text-center text-[10px] text-slate-300 py-4 font-light bg-white rounded-xl border border-dashed border-slate-200">沒有待核銷項目</p> :
-                    <div className="bg-white rounded-[30px] border border-slate-100 p-4 space-y-3 shadow-sm">
-                      {submissions.filter(s => s.status === 'redeemed').map(coupon => (
-                          <div key={coupon.id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                             <div className="w-10 h-10 rounded-lg bg-white overflow-hidden shrink-0 shadow-sm border border-slate-100"><img src={coupon.image} className="w-full h-full object-cover"/></div>
-                             <div className="flex-1 min-w-0">
-                               <p className="text-xs font-bold text-slate-600 truncate">{coupon.description.replace('🎁 已兌換：', '')}</p>
-                             </div>
-                             <button onClick={() => handleVerifyCoupon(coupon.id)} className="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-bold active:scale-95 flex items-center gap-1 shadow-sm hover:bg-emerald-600"><Icon name="Check" size={12}/> 核銷</button>
-                          </div>
-                      ))}
-                    </div>}
-                  </div>
-
-                  {/* Game Config */}
-                  <div className="luxury-card p-6 rounded-[30px] relative overflow-hidden">
-                     <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none"><Icon name="Dice" size={100}/></div>
-                     <h3 className="font-bold text-slate-700 mb-6 flex gap-2 items-center text-sm"><Icon name="Dice" size={18}/> 遊戲參數設定</h3>
-                     
-                     <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div><label className="settings-label">打卡獎勵 (點)</label><input type="number" className="settings-input" value={pendingSettings?.checkInPoints} onChange={(e) => setPendingSettings({...pendingSettings, checkInPoints: parseInt(e.target.value)})} /></div>
-                        <div><label className="settings-label">金庫利率 (0.05)</label><input type="number" step="0.01" className="settings-input" value={pendingSettings?.bankRate} onChange={(e) => setPendingSettings({...pendingSettings, bankRate: parseFloat(e.target.value)})} /></div>
-                        <div><label className="settings-label">金庫閉鎖 (小時)</label><input type="number" className="settings-input" value={pendingSettings?.bankLockHours} onChange={(e) => setPendingSettings({...pendingSettings, bankLockHours: parseInt(e.target.value)})} /></div>
-                        <div><label className="settings-label">猜拳花費 (點)</label><input type="number" className="settings-input" value={pendingSettings?.rpsCost} onChange={(e) => setPendingSettings({...pendingSettings, rpsCost: parseInt(e.target.value)})} /></div>
-                        <div><label className="settings-label">猜拳倍率 (倍)</label><input type="number" className="settings-input" value={pendingSettings?.rpsWinMultiplier} onChange={(e) => setPendingSettings({...pendingSettings, rpsWinMultiplier: parseInt(e.target.value)})} /></div>
-                        <div><label className="settings-label">轉盤花費 (點)</label><input type="number" className="settings-input" value={pendingSettings?.wheelCost} onChange={(e) => setPendingSettings({...pendingSettings, wheelCost: parseInt(e.target.value)})} /></div>
-                     </div>
-
-                     <div className="border-t border-slate-100 pt-6 mb-6">
-                        <h4 className="text-xs font-bold text-slate-600 mb-4">🎡 轉盤獎項 (6項)</h4>
-                        <div className="grid grid-cols-2 gap-3">
-                           {pendingSettings?.wheelSegments?.map((seg, i) => (
-                              <div key={i} className="flex gap-2">
-                                 <input className="settings-input flex-[2]" value={seg.label} onChange={(e) => updateWheelSegment(i, 'label', e.target.value)} placeholder="名稱" />
-                                 <input type="number" className="settings-input flex-1" value={seg.value} onChange={(e) => updateWheelSegment(i, 'value', parseInt(e.target.value))} placeholder="點數" />
-                              </div>
-                           ))}
-                        </div>
-                     </div>
-
-                     <div className="border-t border-slate-100 pt-6 mb-6">
-                        <h4 className="text-xs font-bold text-slate-600 mb-4">🎯 任務設定</h4>
-                        <div className="space-y-2 mb-4">
-                           {pendingSettings?.missions?.map((m, i) => (
-                              <div key={i} className="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                 <div className="flex-1 min-w-0 grid grid-cols-3 gap-2">
-                                    <div className="col-span-3 text-[10px] font-bold text-slate-500 truncate">{m.title}</div>
-                                    <div className="text-[9px] text-slate-400">目標: {m.target}</div>
-                                    <div className="text-[9px] text-slate-400">獎勵: {m.reward}</div>
-                                    <div className="text-[9px] text-slate-400 uppercase">{m.type}</div>
-                                 </div>
-                                 <button onClick={() => removeMission(i)} className="p-2 text-red-400 hover:bg-red-50 rounded-lg"><Icon name="Trash2" size={14}/></button>
-                              </div>
-                           ))}
-                        </div>
-                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                           <p className="text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-wide">新增任務</p>
-                           <input className="settings-input mb-2" placeholder="標題 (例: 連續打卡7天)" value={newMissionTitle} onChange={e => setNewMissionTitle(e.target.value)} />
-                           <div className="grid grid-cols-3 gap-2 mb-2">
-                              <input type="number" className="settings-input" placeholder="目標值" value={newMissionTarget} onChange={e => setNewMissionTarget(e.target.value)} />
-                              <input type="number" className="settings-input" placeholder="獎勵點數" value={newMissionReward} onChange={e => setNewMissionReward(e.target.value)} />
-                              <select className="settings-input" value={newMissionType} onChange={e => setNewMissionType(e.target.value)}>
-                                 <option value="streak">連續天數</option>
-                                 <option value="total">累計點數</option>
-                              </select>
-                           </div>
-                           <button onClick={addMission} className="w-full py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-900">加入任務</button>
-                        </div>
-                     </div>
-
-                     <button onClick={handleSaveGameSettings} className="w-full py-4 btn-primary font-bold text-xs shadow-lg flex items-center justify-center gap-2"><Icon name="Save" size={16}/> 儲存設定</button>
-                  </div>
-
-                  <div className="luxury-card p-6 rounded-[30px]">
-                      <h3 className="font-bold text-emerald-600 mb-4 flex gap-2 items-center text-sm"><Icon name="Gift" size={18}/> 手動發送點數</h3>
-                      <div className="space-y-4">
-                        <input className="settings-input" placeholder="原因" value={givePointsReason} onChange={(e) => setGivePointsReason(e.target.value)} />
-                        <input type="number" className="settings-input" placeholder="點數數量" value={givePointsAmount} onChange={(e) => setGivePointsAmount(e.target.value)} />
-                        <button onClick={handleGivePoints} className="w-full py-4 bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-md hover:bg-emerald-600">發送</button>
-                      </div>
-                  </div>
-
-                  <div className="luxury-card p-6 rounded-[30px]">
-                      <h3 className="font-bold text-sky-600 mb-4 flex gap-2 items-center text-sm"><Icon name="Store" size={18}/> 上架商品</h3>
-                      <div className="space-y-4">
-                        <input className="settings-input" placeholder="商品名稱" value={adminRewardName} onChange={(e) => setAdminRewardName(e.target.value)} />
-                        <input type="number" className="settings-input" placeholder="花費點數" value={adminRewardCost} onChange={(e) => setAdminRewardCost(e.target.value)} />
-                        <input type="file" accept="image/*" className="text-[10px] block w-full text-slate-400" onChange={(e) => setAdminRewardImage(e.target.files[0])} />
-                        <button onClick={handleAddRewardByAdmin} className="w-full py-4 bg-sky-500 text-white rounded-xl font-bold text-xs shadow-md hover:bg-sky-600">上架</button>
-                      </div>
-                  </div>
-                  </>
-                )}
+                </div>
               </div>
+            )}
+
+            {activeTab === 'activities' && (
+               <div className="space-y-6 animate-in">
+                  {!currentActivity ? (
+                     <div className="grid grid-cols-2 gap-4">
+                        <div onClick={() => setCurrentActivity('wheel')} className="bg-white p-5 rounded-[24px] h-36 flex flex-col justify-between border group"><Icon name="Disc" size={24} className="text-indigo-500"/><div className="text-sm font-bold">幸運轉盤</div></div>
+                        <div onClick={() => setCurrentActivity('rps')} className="bg-white p-5 rounded-[24px] h-36 flex flex-col justify-between border group"><Icon name="Hand" size={24} className="text-pink-500"/><div className="text-sm font-bold">猜拳遊戲</div></div>
+                        <div onClick={() => setCurrentActivity('bank')} className="bg-white p-5 rounded-[24px] h-36 flex flex-col justify-between border group"><Icon name="PiggyBank" size={24} className="text-emerald-500"/><div className="text-sm font-bold">小金庫</div></div>
+                        <div onClick={() => setCurrentActivity('missions')} className="bg-white p-5 rounded-[24px] h-36 flex flex-col justify-between border group"><Icon name="Target" size={24} className="text-amber-500"/><div className="text-sm font-bold">任務牆</div></div>
+                     </div>
+                  ) : currentActivity === 'wheel' ? (
+                     <div className="luxury-card p-6 rounded-[30px] flex flex-col items-center">
+                        <button onClick={() => setCurrentActivity(null)} className="self-start mb-4 text-xs font-bold text-slate-400">BACK</button>
+                        <div className="relative w-64 h-64 mb-10">
+                           <div className="w-full h-full rounded-full border-[8px] border-white shadow-2xl overflow-hidden relative transition-transform duration-[3000ms] ease-out" style={{ transform: `rotate(${wheelRotation}deg)`, background: `conic-gradient(${gameSettings.wheelSegments.map((s,i) => `${s.color} ${i*60}deg ${(i+1)*60}deg`).join(',')})` }}>
+                              {gameSettings.wheelSegments.map((seg, i) => <div key={i} className="wheel-segment" style={{ transform: `rotate(${i * 60}deg)` }}><span className="wheel-text">{seg.label}</span></div>)}
+                           </div>
+                           <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-3 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-slate-800 z-10"></div>
+                        </div>
+                        <button onClick={handleSpinWheel} disabled={wheelSpinning} className="w-full btn-primary py-4 shadow-lg">{wheelSpinning ? '轉動中...' : `旋轉一次 (${gameSettings.wheelCost} P)`}</button>
+                     </div>
+                  ) : currentActivity === 'rps' ? (
+                     <div className="luxury-card p-8 rounded-[30px] text-center">
+                        <button onClick={() => setCurrentActivity(null)} className="self-start mb-4 text-xs font-bold text-slate-400">BACK</button>
+                        <h2 className="font-bold text-xl mb-10">猜拳對決</h2>
+                        <div className="flex justify-around items-center mb-10">
+                           <div className={rpsState==='playing'?'animate-bounce-hand':''}>{rpsUserChoice==='rock'?'✊':rpsUserChoice==='paper'?'🖐️':rpsUserChoice==='scissors'?'✌️':'❓'}<p className="text-[10px] mt-2">玩家</p></div>
+                           <div className="text-slate-200">VS</div>
+                           <div className={rpsState==='playing'?'animate-bounce-hand':''}>{rpsCpuChoice==='rock'?'✊':rpsCpuChoice==='paper'?'🖐️':rpsCpuChoice==='scissors'?'✌️':'❓'}<p className="text-[10px] mt-2">電腦</p></div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3">
+                           <button onClick={() => handlePlayRPS('rock')} className="bg-white border py-4 rounded-xl text-2xl shadow-sm">✊</button>
+                           <button onClick={() => handlePlayRPS('paper')} className="bg-white border py-4 rounded-xl text-2xl shadow-sm">🖐️</button>
+                           <button onClick={() => handlePlayRPS('scissors')} className="bg-white border py-4 rounded-xl text-2xl shadow-sm">✌️</button>
+                        </div>
+                     </div>
+                  ) : currentActivity === 'bank' ? (
+                     <div className="luxury-card p-6 rounded-[30px] space-y-6">
+                        <button onClick={() => setCurrentActivity(null)} className="text-xs font-bold text-slate-400">BACK</button>
+                        <div className="gold-bg p-8 rounded-[24px] text-white text-center shadow-lg"><p className="text-xs font-bold opacity-60 uppercase tracking-widest mb-1">金庫餘額</p><p className="text-5xl font-bold">{savings.balance || 0}</p></div>
+                        <div className="grid grid-cols-2 gap-3"><button onClick={handleDeposit} className="bg-slate-50 border py-4 rounded-xl font-bold text-xs">存款</button><button onClick={() => alert("目前閉鎖中")} className="bg-slate-50 border py-4 rounded-xl font-bold text-xs">提款</button></div>
+                        <button onClick={handleCollectInterest} className="w-full py-4 border-2 gold-border gold-text rounded-xl font-bold text-xs">領取每日利息</button>
+                     </div>
+                  ) : null}
+               </div>
+            )}
+
+            {activeTab === 'rewards' && (
+               <div className="space-y-6 animate-in">
+                  <div className="luxury-card p-6 rounded-[30px] space-y-4">
+                     <h3 className="font-bold text-slate-800">許願池</h3>
+                     <input className="settings-input" placeholder="想要什麼..." value={wishName} onChange={e => setWishName(e.target.value)} />
+                     <button onClick={handleMakeWish} className="w-full btn-primary py-4 rounded-xl font-bold text-xs">送出願望</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                     {rewards.filter(r => r.available).map(item => (
+                        <div key={item.id} className="luxury-card p-3 rounded-[24px] flex flex-col relative group">
+                           <div className="aspect-square bg-slate-50 rounded-[18px] mb-3 overflow-hidden border"><img src={item.image} className="w-full h-full object-cover" /></div>
+                           <h4 className="font-bold text-sm mb-2 truncate px-1">{item.name}</h4>
+                           <button onClick={() => handleRedeem(item)} className="w-full py-2.5 bg-slate-800 text-white rounded-xl text-xs font-bold">{item.cost} P 兌換</button>
+                           {isAdmin && <div onClick={() => deleteItem('rewards', item.id, item.name)} className="delete-badge"><Icon name="Trash2" size={12}/></div>}
+                        </div>
+                     ))}
+                  </div>
+               </div>
+            )}
+
+            {activeTab === 'admin' && isAdmin && (
+               <div className="space-y-8 animate-in pb-10">
+                  <div className="luxury-card p-6 rounded-[30px] space-y-4">
+                     <h3 className="font-bold flex items-center gap-2"><Icon name="Check" size={16}/> 待審核清單</h3>
+                     {submissions.filter(s => s.status==='pending').map(sub => (
+                        <div key={sub.id} className="bg-slate-50 p-4 rounded-2xl space-y-3">
+                           {sub.image && <img src={sub.image} className="w-full h-40 object-cover rounded-xl" />}
+                           <p className="text-xs font-medium italic">"{sub.description}"</p>
+                           <div className="flex gap-2">
+                              <input type="number" className="settings-input flex-1" placeholder="10" value={approvalPoints[sub.id] || ''} onChange={e => setApprovalPoints({...approvalPoints, [sub.id]: e.target.value})} />
+                              <button onClick={() => handleApprove(sub, approvalPoints[sub.id] || 10)} className="btn-primary px-6 text-xs font-bold">批准</button>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+
+                  <div className="luxury-card p-6 rounded-[30px] space-y-4">
+                     <h3 className="font-bold flex items-center gap-2"><Icon name="Dice" size={16}/> 遊戲參數控制</h3>
+                     <div className="grid grid-cols-2 gap-3">
+                        <div><label className="settings-label">轉盤費</label><input type="number" className="settings-input" value={pendingSettings?.wheelCost} onChange={e => setPendingSettings({...pendingSettings, wheelCost: parseInt(e.target.value)})} /></div>
+                        <div><label className="settings-label">打卡獎</label><input type="number" className="settings-input" value={pendingSettings?.checkInPoints} onChange={e => setPendingSettings({...pendingSettings, checkInPoints: parseInt(e.target.value)})} /></div>
+                     </div>
+                     <button onClick={handleSaveGameSettings} className="w-full py-3 btn-primary font-bold text-xs">儲存所有設定</button>
+                  </div>
+               </div>
             )}
 
           </div>
 
-          {/* Bottom Nav */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 px-8 py-4 flex justify-between items-center text-[9px] font-bold text-slate-300 max-w-md mx-auto z-50 sm:rounded-b-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-            <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${activeTab === 'home' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}>
-              <Icon name="Camera" size={22} className={activeTab === 'home' ? 'fill-current text-slate-800' : ''}/><span>首頁</span>
-            </button>
-            <button onClick={() => setActiveTab('activities')} className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${activeTab === 'activities' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}>
-              <Icon name="Dice" size={22} className={activeTab === 'activities' ? 'fill-current text-slate-800' : ''}/><span>活動</span>
-            </button>
-            <button onClick={() => setActiveTab('rewards')} className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${activeTab === 'rewards' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}>
-              <Icon name="Gift" size={22} className={activeTab === 'rewards' ? 'fill-current text-slate-800' : ''}/><span>兌換</span>
-            </button>
-            <button onClick={() => setActiveTab('notifs')} className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${activeTab === 'notifs' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}>
-              <div className="relative">
-                <Icon name="Bell" size={22} className={activeTab === 'notifs' ? 'fill-current text-slate-800' : ''}/>
-                {unreadCount > 0 && <span className="absolute -top-0.5 -right-0.5 bg-amber-500 w-2.5 h-2.5 rounded-full border border-white"></span>}
-              </div>
-              <span>通知</span>
-            </button>
-            {isAdmin && (
-              <button onClick={() => setActiveTab('admin')} className={`flex flex-col items-center gap-1.5 transition-all duration-300 ${activeTab === 'admin' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}>
-                <Icon name={isAdmin ? "LogOut" : "Lock"} size={22} className={activeTab === 'admin' ? 'fill-current text-slate-800' : ''}/><span>管理</span>
-              </button>
-            )}
+          <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t px-8 py-4 flex justify-between items-center text-[9px] font-bold text-slate-300 max-w-md mx-auto z-50 sm:rounded-b-[40px] shadow-lg">
+            <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'home' ? 'text-slate-800 scale-110' : ''}`}><Icon name="Camera" size={22} className={activeTab === 'home' ? 'fill-current' : ''}/><span>首頁</span></button>
+            <button onClick={() => setActiveTab('activities')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'activities' ? 'text-slate-800 scale-110' : ''}`}><Icon name="Dice" size={22} className={activeTab === 'activities' ? 'fill-current' : ''}/><span>活動</span></button>
+            <button onClick={() => setActiveTab('rewards')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'rewards' ? 'text-slate-800 scale-110' : ''}`}><Icon name="Gift" size={22} className={activeTab === 'rewards' ? 'fill-current' : ''}/><span>商店</span></button>
+            <button onClick={() => setActiveTab('notifs')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'notifs' ? 'text-slate-800 scale-110' : ''}`}><div className="relative"><Icon name="Bell" size={22} className={activeTab === 'notifs' ? 'fill-current' : ''}/>{unreadCount > 0 && <span className="absolute -top-0.5 -right-0.5 bg-amber-500 w-2 h-2 rounded-full"></span>}</div><span>通知</span></button>
+            {isAdmin && <button onClick={() => setActiveTab('admin')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'admin' ? 'text-slate-800 scale-110' : ''}`}><Icon name="Lock" size={22} className="fill-current"/><span>後台</span></button>}
           </div>
         </div>
       );
