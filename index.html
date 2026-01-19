@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Point Premium | 應有盡有大超商</title>
+  <title>Point | 應有盡有大超商</title>
   
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@300;400;700&display=swap" rel="stylesheet">
   
@@ -136,7 +136,7 @@
   <div id="loading-screen">
     <div class="animate-float loading-icon">🛒</div>
     <div style="color:#0f172a; font-weight:300; letter-spacing: 0.2em; font-size: 14px; margin-bottom: 8px;">即將進入應有盡有大超商</div>
-    <div id="loading-status" style="font-size:10px; color:#94a3b8;">正在為您開啟精品服務...</div>
+    <div id="loading-status" style="font-size:10px; color:#94a3b8;">正在為您開啟服務...</div>
     <button class="retry-btn" id="retry-btn" onclick="window.location.reload()">重新載入</button>
   </div>
 
@@ -383,7 +383,7 @@
         try {
           const img = await compressImage(checkInImage);
           const pts = gameSettings.checkInPoints || 2;
-          await addDoc(getPublicRef('submissions'), { description: "💅 指甲打卡紀錄", image: img, status: 'checkin', awardedPoints: pts, timestamp: serverTimestamp(), userId: user.uid });
+          await addDoc(getPublicRef('submissions'), { description: "💅 指甲保護打卡", image: img, status: 'checkin', awardedPoints: pts, timestamp: serverTimestamp(), userId: user.uid });
           await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(pts), totalIssued: increment(pts) });
           setCheckInImage(null); alert("打卡成功");
         } catch(e) { alert("失敗"); } finally { setIsCheckingIn(false); }
@@ -474,6 +474,16 @@
       };
 
       const handleRedeem = async (r) => { if(points < r.cost) return alert("點數不足"); if(confirm(`兌換 ${r.name}?`)) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-r.cost), totalRedeemed: increment(r.cost) }); await addDoc(getPublicRef('submissions'), { description: `🎁 已兌換：${r.name}`, image: r.image, status: 'redeemed', awardedPoints: -r.cost, timestamp: serverTimestamp(), userId: user.uid }); alert("兌換成功"); } };
+
+      const handleUploadTaskByAdmin = async () => {
+        if (!adminRewardName || !adminRewardCost) return;
+        setIsAddingReward(true);
+        try {
+          const img = adminRewardImage ? await compressImage(adminRewardImage) : "https://placehold.co/400x300/e2e8f0/64748b?text=Gift";
+          await addDoc(getPublicRef('rewards'), { name: adminRewardName, cost: parseInt(adminRewardCost), image: img, available: true, timestamp: serverTimestamp() });
+          setAdminRewardName(''); setAdminRewardCost(''); alert("上架成功");
+        } catch(e) { alert("失敗"); } finally { setIsAddingReward(false); }
+      };
       
       const updateWheelSegment = (idx, field, val) => { const ms = [...pendingSettings.wheelSegments]; ms[idx] = {...ms[idx], [field]: val}; setPendingSettings({...pendingSettings, wheelSegments: ms}); };
       const addMission = () => { if(!newMissionTitle || !newMissionTarget) return; const newM = { id: 'm'+Date.now(), title: newMissionTitle, target: parseInt(newMissionTarget), reward: parseInt(newMissionReward), type: newMissionType }; setPendingSettings({...pendingSettings, missions: [...(pendingSettings.missions||[]), newM]}); setNewMissionTitle(''); setNewMissionTarget(''); };
@@ -481,11 +491,8 @@
       const deleteItem = async (col, id, name) => { if(confirm("確定刪除?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', col, id)); };
       const handleVerifyCoupon = async (id) => { if(confirm("核銷?")) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', id), {status:'verified'}); };
       const updateAnnounce = async () => { const t = prompt("新公告:", announcement); if(t) await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'announce'), {text: t}); };
-      const handleAddRewardByAdmin = async () => { if(adminRewardName && adminRewardCost) { setIsAddingReward(true); const img = adminRewardImage ? await compressImage(adminRewardImage) : "https://placehold.co/400x300/e2e8f0/64748b?text=Gift"; await addDoc(getPublicRef('rewards'), {name: adminRewardName, cost: parseInt(adminRewardCost), image: img, available: true, timestamp: serverTimestamp()}); setAdminRewardName(''); setAdminRewardCost(''); setIsAddingReward(false); }};
       const handleMakeWish = async () => { if(wishName) { setIsWishing(true); const img = wishImage ? await compressImage(wishImage) : "https://placehold.co/400x300/e2e8f0/64748b?text=Wish"; await addDoc(getPublicRef('rewards'), {name: wishName, cost: 0, image: img, available: false, timestamp: serverTimestamp(), userId: user.uid}); setWishName(''); setIsWishing(false); alert("許願成功"); } };
       const handleGivePoints = async () => { if(givePointsAmount) { await addDoc(getPublicRef('submissions'), {description: `🎁 系統補給: ${givePointsReason}`, status:'bonus', awardedPoints: parseInt(givePointsAmount), timestamp: serverTimestamp(), userId: user.uid}); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), {totalPoints: increment(parseInt(givePointsAmount)), totalIssued: increment(parseInt(givePointsAmount))}); alert("已發送"); }};
-      const handlePayToScratch = async (g) => { if(points<g.cost)return alert("點數不足"); if(confirm(`花費 ${g.cost} 點?`)){ await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), {totalPoints: increment(-g.cost), totalRedeemed: increment(g.cost)}); await addDoc(getPublicRef('submissions'), {description: `🎲 刮刮樂：${g.title}`, status:'scratch', awardedPoints: -g.cost, timestamp: serverTimestamp(), userId: user.uid}); setCanScratchNow(true); }};
-      const handleRevealed = async (val, g, i) => { setCanScratchNow(false); await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', `${g.id}_${user.uid}`), {revealedIndices: arrayUnion(i), gameId: g.id, userId: user.uid}, {merge:true}); if(String(val)===String(g.target)){ alert(`恭喜刮中: ${g.prize}`); await addDoc(getPublicRef('submissions'), {description: `🎁 刮中：${g.prize}`, image: g.image, status:'redeemed', awardedPoints: 0, timestamp: serverTimestamp(), userId: user.uid}); }};
       const handleAddScratchActivity = async () => { if(adminScratchTitle && adminScratchCost){ setIsAddingReward(true); const img = adminScratchImage ? await compressImage(adminScratchImage) : null; if(editingScratchId) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scratch_activities', editingScratchId), {title: adminScratchTitle, prize: adminScratchPrize, cost: parseInt(adminScratchCost), ...(img && {image: img})}); setEditingScratchId(null); } else { const grid = Array(16).fill(0); grid[adminScratchWinnerIndex] = parseInt(adminScratchTarget); let others = []; for(let i=1; i<=16; i++) if(i!==parseInt(adminScratchTarget)) others.push(i); others.sort(()=>Math.random()-0.5); let o=0; for(let i=0; i<16; i++) if(i!==parseInt(adminScratchWinnerIndex)) grid[i]=others[o++]; await addDoc(getPublicRef('scratch_activities'), {title: adminScratchTitle, prize: adminScratchPrize, cost: parseInt(adminScratchCost), target: adminScratchTarget, grid, image: img || "https://placehold.co/400x300/e2e8f0/64748b?text=Game", isActive: true, timestamp: serverTimestamp()}); } setAdminScratchTitle(''); setIsAddingReward(false); }};
       const handleEditScratch = (g) => { setEditingScratchId(g.id); setAdminScratchTitle(g.title); setAdminScratchPrize(g.prize); setAdminScratchCost(g.cost); document.querySelector('.admin-scratch-form').scrollIntoView({behavior:'smooth'}); };
       const getRevealedCellsForGame = (gid) => { const s=new Set(); allScratchProgress.filter(p=>p.gameId===gid).forEach(d=>d.revealedIndices?.forEach(i=>s.add(i))); return s; };
@@ -508,15 +515,15 @@
           
           <div className="luxury-bg p-6 pb-10 text-white rounded-b-[45px] shadow-2xl shrink-0 z-10 relative">
             <div className="flex justify-between items-center mb-8">
-              <div className="flex items-center gap-3 pl-2"><div className="w-1.5 h-6 luxury-gold-gradient rounded-full"></div><h1 className="text-lg font-bold tracking-widest uppercase font-serif gold-accent">Point Premium</h1></div>
+              <div className="flex items-center gap-3 pl-2"><div className="w-1.5 h-6 luxury-gold-gradient rounded-full"></div><h1 className="text-lg font-bold tracking-widest uppercase font-serif gold-accent">Point</h1></div>
               <div className="flex items-center gap-3">
                 <button onClick={() => setActiveTab('notifs')} className="relative p-2.5 bg-white/5 rounded-xl border border-white/10"><Icon name="Bell" size={18} className="text-slate-300"/>{unreadCount > 0 && <span className="absolute top-1.5 right-1.5 bg-amber-500 w-2 h-2 rounded-full"></span>}</button>
                 <button onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(!showAdminLogin)} className="p-2.5 bg-white/5 rounded-xl border border-white/10"><Icon name={isAdmin ? "LogOut" : "Lock"} size={18} className="text-slate-300"/></button>
               </div>
             </div>
             <div className="flex justify-center mb-6"><div className="point-card px-10 py-4 rounded-2xl flex flex-col items-center min-w-[200px]"><span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">目前點數</span><span className="text-5xl font-bold text-white tracking-tight drop-shadow-lg">{points}</span></div></div>
-            <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 marquee mx-2 backdrop-blur-md"><span className="text-[11px] font-light text-slate-300">{announcement}</span></div>
-            {showAdminLogin && !isAdmin && <div className="absolute top-24 right-6 bg-white p-6 rounded-2xl shadow-2xl z-50 w-64 text-slate-800 border animate-in"><input type="password" placeholder="Passcode" className="w-full bg-slate-50 border p-3 rounded-xl mb-3 text-center tracking-widest outline-none text-sm" value={adminPass} onChange={e => setAdminPass(e.target.value)} autoFocus /><button onClick={checkAdmin} className="w-full btn-luxury py-3 rounded-xl font-bold text-xs uppercase tracking-widest">Verify Access</button></div>}
+            <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 marquee mx-2 backdrop-blur-md"><span className="text-[11px] font-light text-slate-300 uppercase tracking-wide">{announcement}</span></div>
+            {showAdminLogin && !isAdmin && <div className="absolute top-24 right-6 bg-white p-6 rounded-2xl shadow-2xl z-50 w-64 text-slate-800 border animate-in"><input type="password" placeholder="管理員密碼" className="w-full bg-slate-50 border p-3 rounded-xl mb-3 text-center tracking-widest outline-none text-sm" value={adminPass} onChange={e => setAdminPass(e.target.value)} autoFocus /><button onClick={checkAdmin} className="w-full btn-luxury py-3 rounded-xl font-bold text-xs uppercase tracking-widest">驗證身份</button></div>}
           </div>
 
           <div className="p-6 flex-1 overflow-y-auto no-scrollbar space-y-10">
@@ -539,7 +546,7 @@
                        <Icon name="Camera" size={24}/>
                        <input type="file" accept="image/*" className="hidden" onChange={e => setCheckInImage(e.target.files[0])} />
                     </label>
-                    <div className="flex-1"><p className="font-bold text-sm text-slate-800">每日美甲打卡</p><p className="text-[10px] text-slate-400 font-medium">上傳美照領 {gameSettings.checkInPoints} P</p></div>
+                    <div className="flex-1"><p className="font-bold text-sm text-slate-800">指甲保護</p><p className="text-[10px] text-slate-400 font-medium">上傳美照領 {gameSettings.checkInPoints} P</p></div>
                     <button onClick={handleCheckIn} className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm ${!checkInImage ? 'bg-slate-50 text-slate-300' : 'btn-luxury'}`}>打卡</button>
                 </div>
 
@@ -590,7 +597,7 @@
                      </div>
                   ) : currentActivity === 'wheel' ? (
                      <div className="luxury-card p-8 rounded-[40px] flex flex-col items-center animate-in">
-                        <button onClick={() => setCurrentActivity(null)} className="self-start mb-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-full">← BACK</button>
+                        <button onClick={() => setCurrentActivity(null)} className="self-start mb-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-full">← 返回</button>
                         <div className="relative w-64 h-64 mb-12">
                            <div className="w-full h-full rounded-full border-[10px] border-white shadow-2xl overflow-hidden relative transition-transform duration-[3000ms] ease-out" style={{ transform: `rotate(${wheelRotation}deg)`, background: `conic-gradient(${gameSettings.wheelSegments.map((s,i) => `${s.color} ${i*60}deg ${(i+1)*60}deg`).join(',')})` }}>
                               {gameSettings.wheelSegments.map((seg, i) => <div key={i} className="wheel-segment" style={{ transform: `rotate(${i * 60}deg)` }}><span className="wheel-text">{seg.label}</span></div>)}
@@ -601,7 +608,7 @@
                      </div>
                   ) : currentActivity === 'rps' ? (
                      <div className="luxury-card p-10 rounded-[40px] text-center animate-in">
-                        <button onClick={() => setCurrentActivity(null)} className="self-start mb-6 text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-3 py-1.5 rounded-full">← BACK</button>
+                        <button onClick={() => setCurrentActivity(null)} className="self-start mb-6 text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-3 py-1.5 rounded-full">← 返回</button>
                         <h2 className="font-bold text-slate-800 text-lg mb-12 tracking-widest">猜拳大對決</h2>
                         <div className="flex justify-around items-center mb-12">
                            <div className={rpsState==='playing'?'animate-bounce-hand':''}>
@@ -623,11 +630,11 @@
                      </div>
                   ) : currentActivity === 'bank' ? (
                      <div className="luxury-card p-8 rounded-[40px] space-y-8 animate-in">
-                        <button onClick={() => setCurrentActivity(null)} className="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-3 py-1.5 rounded-full">← BACK</button>
-                        <div className="luxury-gold-gradient p-10 rounded-[30px] text-white text-center shadow-xl relative overflow-hidden">
+                        <button onClick={() => setCurrentActivity(null)} className="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-3 py-1.5 rounded-full">← 返回</button>
+                        <div className="luxury-gold-gradient p-10 rounded-[30px] text-amber-900 text-center shadow-xl relative overflow-hidden">
                            <p className="text-[10px] font-bold opacity-70 uppercase mb-3">小金庫餘額</p>
                            <p className="text-5xl font-bold">{savings.balance || 0}</p>
-                           <p className="mt-5 text-[9px] font-bold bg-black/10 inline-block px-3 py-1 rounded-full">日利率: {gameSettings.bankRate * 100}%</p>
+                           <p className="mt-5 text-[9px] font-bold bg-white/30 inline-block px-3 py-1 rounded-full">日利率: {gameSettings.bankRate * 100}%</p>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                            <button onClick={handleDeposit} className="bg-slate-50 border py-4 rounded-xl font-bold text-xs uppercase hover:bg-slate-100">存入</button>
@@ -637,7 +644,7 @@
                      </div>
                   ) : currentActivity === 'missions' ? (
                      <div className="luxury-card p-8 rounded-[40px] animate-in">
-                        <button onClick={() => setCurrentActivity(null)} className="mb-6 text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-3 py-1.5 rounded-full">← BACK</button>
+                        <button onClick={() => setCurrentActivity(null)} className="mb-6 text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-3 py-1.5 rounded-full">← 返回</button>
                         <h2 className="font-bold text-slate-800 text-lg mb-8 border-l-2 border-slate-800 pl-4">任務進度</h2>
                         <div className="space-y-5">
                            {gameSettings.missions && gameSettings.missions.map(m => {
@@ -683,9 +690,9 @@
             {activeTab === 'rewards' && (
               <div className="space-y-8 animate-in">
                 <div className="luxury-card p-6 rounded-[30px] space-y-4">
-                  <h3 className="font-bold text-slate-800">精品許願池</h3>
+                  <h3 className="font-bold text-slate-800">夢想許願池</h3>
                   <input className="settings-input" placeholder="想要什麼獎勵..." value={wishName} onChange={e => setWishName(e.target.value)} />
-                  <button onClick={handleMakeWish} className="w-full btn-luxury py-4 rounded-xl font-bold text-xs uppercase tracking-widest">送出精品願望</button>
+                  <button onClick={handleMakeWish} className="w-full btn-luxury py-4 rounded-xl font-bold text-xs uppercase tracking-widest">送出夢想</button>
                 </div>
                 
                 {myWishes.length > 0 && (
@@ -711,7 +718,7 @@
                            <div className="aspect-square bg-slate-50 rounded-2xl mb-4 overflow-hidden border border-slate-50"><img src={item.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform" /></div>
                            <h4 className="font-bold text-sm mb-2 truncate px-1 text-slate-700">{item.name}</h4>
                            <button onClick={() => handleRedeem(item)} className="w-full py-3 bg-slate-800 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider">{item.cost} P 兌換</button>
-                           {isAdmin && <div onClick={() => deleteItem('rewards', item.id, item.name)} className="delete-badge"><Icon name="Trash2" size={12}/></div>}
+                           {isAdmin && <div onClick={(e) => { e.stopPropagation(); deleteItem('rewards', item.id, item.name); }} className="delete-badge"><Icon name="Trash2" size={12}/></div>}
                         </div>
                      ))}
                 </div>
@@ -877,11 +884,11 @@
           </div>
 
           <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-100 px-8 py-5 flex justify-between items-center text-[9px] font-bold text-slate-300 max-w-md mx-auto z-50 sm:rounded-b-[40px] shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
-            <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'home' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}><Icon name="Camera" size={24} className={activeTab === 'home' ? 'text-slate-800' : ''}/><span>HOME</span></button>
-            <button onClick={() => setActiveTab('activities')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'activities' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}><Icon name="Dice" size={24} className={activeTab === 'activities' ? 'text-slate-800' : ''}/><span>GAMES</span></button>
-            <button onClick={() => setActiveTab('rewards')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'rewards' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}><Icon name="Gift" size={24} className={activeTab === 'rewards' ? 'text-slate-800' : ''}/><span>SHOP</span></button>
-            <button onClick={() => setActiveTab('notifs')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'notifs' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}><div className="relative"><Icon name="Bell" size={24} className={activeTab === 'notifs' ? 'text-slate-800' : ''}/>{unreadCount > 0 && <span className="absolute -top-0.5 -right-0.5 bg-amber-500 w-2.5 h-2.5 rounded-full border-2 border-white"></span>}</div><span>ALERT</span></button>
-            {isAdmin && <button onClick={() => setActiveTab('admin')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'admin' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}><Icon name="Lock" size={24} className={activeTab === 'admin' ? 'text-slate-800' : ''}/><span>ADMIN</span></button>}
+            <button onClick={() => setActiveTab('home')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'home' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}><Icon name="Camera" size={24} className={activeTab === 'home' ? 'text-slate-800' : ''}/><span>首頁</span></button>
+            <button onClick={() => setActiveTab('activities')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'activities' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}><Icon name="Dice" size={24} className={activeTab === 'activities' ? 'text-slate-800' : ''}/><span>活動</span></button>
+            <button onClick={() => setActiveTab('rewards')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'rewards' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}><Icon name="Gift" size={24} className={activeTab === 'rewards' ? 'text-slate-800' : ''}/><span>商店</span></button>
+            <button onClick={() => setActiveTab('notifs')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'notifs' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}><div className="relative"><Icon name="Bell" size={24} className={activeTab === 'notifs' ? 'text-slate-800' : ''}/>{unreadCount > 0 && <span className="absolute -top-0.5 -right-0.5 bg-amber-500 w-2.5 h-2.5 rounded-full border-2 border-white"></span>}</div><span>通知</span></button>
+            {isAdmin && <button onClick={() => setActiveTab('admin')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'admin' ? 'text-slate-800 scale-110' : 'hover:text-slate-500'}`}><Icon name="Lock" size={24} className={activeTab === 'admin' ? 'text-slate-800' : ''}/><span>後台</span></button>}
           </div>
         </div>
       );
