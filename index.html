@@ -236,7 +236,7 @@
         Target: (<Fragment><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Fragment>),
         Disc: (<Fragment><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 0 0 0 20"/><path d="M12 12 2.3 10.5"/><path d="M12 12l9.7-1.5"/></Fragment>),
         PiggyBank: (<Fragment><path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5c-3 3-5 3-5 3s-0.5-2.3 3-5l2.5-2.5c1-1 2.5-1.5 4-1.5 2.5 0 4.8 1.5 5.8 3.5H19z"/><path d="M19 5h-1"/><path d="M22 9c0 5-4 9-9 9s-9-4-9-9c0-3.3 2-6.2 4.9-7.9l0.9 0.9C7.5 3.1 6 5.4 6 8c0 3.3 2.7 6 6 6s6-2.7 6-6c0-2-0.8-3.8-2.2-5l0.7-0.7c3.1 1.7 5.5 5 5.5 6.7z"/></Fragment>),
-        Sparkles: (<Fragment><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M9 3v4M3 5h4M3 9h4"/></Fragment>),
+        Sparkles: (<Fragment><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M9 3v4M3 5h4M3 9h4"/></Fragment>),
         Edit: (<Fragment><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></Fragment>),
         ArrowLeft: (<Fragment><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></Fragment>),
       };
@@ -596,7 +596,8 @@
           const mySubs = submissions.filter(s => s.userId === user?.uid);
           const totalEarned = mySubs.reduce((acc, curr) => acc + (curr.awardedPoints > 0 ? curr.awardedPoints : 0), 0);
           const checkins = [...new Set(mySubs.filter(s => s.status === 'checkin').map(s => new Date(s.timestamp?.seconds*1000).toDateString()))];
-          return { streak: checkins.length, total: totalEarned };
+          const claimed = new Set(mySubs.filter(s => s.status === 'mission_reward').map(s => s.missionId));
+          return { streak: checkins.length, total: totalEarned, claimed };
       }, [submissions, user]);
 
       const handleClaimMission = async (m) => {
@@ -751,7 +752,7 @@
                                        <div className="w-2 h-2 rounded-full" style={{background: seg.color}}></div>
                                        <span className="font-bold text-slate-700">{seg.label}</span>
                                     </div>
-                                    <span className="font-mono text-slate-400">{Math.round((seg.weight || 0) / wheelTotalWeight * 100)}%</span>
+                                    <span className="font-mono text-slate-400">{Math.round((seg.weight || 0) / (wheelTotalWeight || 1) * 100)}%</span>
                                  </div>
                               ))}
                            </div>
@@ -985,6 +986,7 @@
                         <div><label className="settings-label">打卡獎勵</label><input type="number" className="settings-input" value={pendingSettings?.checkInPoints} onChange={e => setPendingSettings({...pendingSettings, checkInPoints: parseInt(e.target.value)})} /></div>
                         <div><label className="settings-label">金庫日利率</label><input type="number" step="0.01" className="settings-input" value={pendingSettings?.bankRate} onChange={e => setPendingSettings({...pendingSettings, bankRate: parseFloat(e.target.value)})} /></div>
                         <div><label className="settings-label">金庫閉鎖(時)</label><input type="number" className="settings-input" value={pendingSettings?.bankLockHours} onChange={e => setPendingSettings({...pendingSettings, bankLockHours: parseInt(e.target.value)})} /></div>
+                        <div><label className="settings-label">猜拳倍率</label><input type="number" step="0.1" className="settings-input" value={pendingSettings?.rpsWinMultiplier} onChange={e => setPendingSettings({...pendingSettings, rpsWinMultiplier: parseFloat(e.target.value)})} /></div>
                      </div>
                      
                      <div className="border-t border-slate-100 pt-6">
