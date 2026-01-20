@@ -595,27 +595,48 @@
           } 
       };
       
-      const handleGivePoints = async () => { 
+      // 更新：整合發送與扣除點數的功能
+      const handleManagePoints = async (isDeduct) => { 
         if(!givePointsAmount) return alert("請輸入點數");
         const amount = parseInt(givePointsAmount);
-        const reason = givePointsReason || "系統補給";
+        if (isNaN(amount) || amount <= 0) return alert("請輸入有效的正整數");
+
+        const reason = givePointsReason || (isDeduct ? "系統扣除" : "系統補給");
+        const finalAmount = isDeduct ? -amount : amount;
+
+        // 如果是扣除，且目前點數不足，提示警告
+        if(isDeduct && points < amount) {
+            if(!confirm(`警告：目前系統總點數 (${points}) 小於欲扣除點數 (${amount})，確定要執行嗎？`)) return;
+        }
+
         try {
             await addDoc(getPublicRef('submissions'), {
-                description: `🎁 系統補給: ${reason}`, 
-                status:'bonus', 
-                awardedPoints: amount, 
+                description: `${isDeduct ? '💸' : '🎁'} ${reason}`, 
+                status: isDeduct ? 'deducted' : 'bonus', 
+                awardedPoints: finalAmount, 
                 timestamp: serverTimestamp(), 
                 userId: user.uid
             }); 
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), {
-                totalPoints: increment(amount), 
-                totalIssued: increment(amount)
-            }); 
+            
+            const statsUpdate = {
+                totalPoints: increment(finalAmount)
+            };
+
+            // 保持帳目平衡：扣除視為一種「回收」，發送視為「發行」
+            if(isDeduct) {
+                statsUpdate.totalRedeemed = increment(amount);
+            } else {
+                statsUpdate.totalIssued = increment(amount);
+            }
+
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), statsUpdate); 
+            
             setGivePointsAmount('');
             setGivePointsReason('');
-            alert("已發送"); 
+            alert(isDeduct ? "已扣除點數" : "已發送點數"); 
         } catch(e) {
-            alert("發送失敗");
+            console.error(e);
+            alert("操作失敗");
         }
       };
       
@@ -1049,14 +1070,17 @@
                     <button onClick={updateAnnounce} className="w-full mt-4 bg-white/10 py-3 rounded-xl text-[10px] font-bold hover:bg-white/20 transition-colors">修改公告</button>
                   </div>
                   
-                  {/* 新增: 系統補給 */}
+                  {/* 更新: 系統補給/扣除 UI */}
                   <div className="luxury-card p-7 rounded-[35px] space-y-4">
-                      <h3 className="font-bold flex items-center gap-3 text-deep-blue text-xs tracking-widest uppercase">系統補給 (手動發點)</h3>
+                      <h3 className="font-bold flex items-center gap-3 text-deep-blue text-xs tracking-widest uppercase">系統點數管理 (手動增減)</h3>
                       <div className="flex gap-3">
-                        <input className="settings-input flex-[2]" placeholder="補給原因 (例如: 額外獎勵)" value={givePointsReason} onChange={e => setGivePointsReason(e.target.value)} />
+                        <input className="settings-input flex-[2]" placeholder="原因 (例如: 額外獎勵、懲罰)" value={givePointsReason} onChange={e => setGivePointsReason(e.target.value)} />
                         <input type="number" className="settings-input flex-1" placeholder="點數" value={givePointsAmount} onChange={e => setGivePointsAmount(e.target.value)} />
                       </div>
-                      <button onClick={handleGivePoints} className="w-full btn-gold py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-md">確認發送</button>
+                      <div className="flex gap-3">
+                          <button onClick={() => handleManagePoints(false)} className="flex-1 btn-gold py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-md">發送點數 (+)</button>
+                          <button onClick={() => handleManagePoints(true)} className="flex-1 bg-slate-200 text-slate-600 hover:bg-slate-300 transition-colors py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-md">扣除點數 (-)</button>
+                      </div>
                   </div>
 
                   <div className="luxury-card p-7 rounded-[35px] space-y-6">
