@@ -488,10 +488,11 @@
 
       useEffect(() => {
          if (!user || !selectedScratchGame) { setCurrentGameProgress([]); return; }
-         return onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', `${selectedScratchGame.id}_${user.uid}`), (d) => {
+         // 修正：讀取全域進度 (改為 _global 結尾)
+         return onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', `${selectedScratchGame.id}_global`), (d) => {
             if (d.exists()) {
                 setCurrentGameProgress(d.data().revealedIndices || []);
-                setCanScratchNow(true); // If document exists, user has paid
+                setCanScratchNow(true); // 全域模式下，只要有點數就能玩，不需要個人購買狀態
             } else {
                 setCurrentGameProgress([]);
                 setCanScratchNow(false);
@@ -870,7 +871,9 @@
             return;
         }
 
-        const progRef = doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', `${game.id}_${user.uid}`);
+        // 修正：將儲存路徑改為 'global'，確保所有人都看到相同的刮卡進度，且刷新後不會消失
+        const progRef = doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', `${game.id}_global`);
+        
         try {
             // 1. 扣除單次點數
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), {
@@ -890,7 +893,7 @@
             // 修正：移除 won: false，避免覆蓋既有的中獎狀態
             await setDoc(progRef, {
                 gameId: game.id,
-                userId: user.uid,
+                // userId: user.uid, // 移除 userId 綁定，改為全域
                 revealedIndices: arrayUnion(idx),
                 timestamp: serverTimestamp()
                 // 注意：這裡不傳入 won 欄位，以免覆蓋
@@ -932,14 +935,19 @@
         }
       };
 
-      const myCheckinPhotos = useMemo(() => submissions.filter(s => s.status === 'checkin' && s.userId === user?.uid && s.image).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)), [submissions, user]);
+      // 修正：移除 userId 篩選，讓所有使用者都能看到打卡牆 (全域顯示)
+      const myCheckinPhotos = useMemo(() => submissions.filter(s => s.status === 'checkin' && s.image).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)), [submissions]);
       const allCheckinPhotos = useMemo(() => submissions.filter(s => s.status === 'checkin' && s.image).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)), [submissions]);
-      const myWishes = useMemo(() => rewards.filter(r => !r.available && (r.userId === user?.uid || !r.userId)), [rewards, user]);
+      
+      // 修正：移除 userId 篩選，讓許願池顯示所有人的願望
+      const myWishes = useMemo(() => rewards.filter(r => !r.available), [rewards]);
+      
       const unreadCount = user ? notifications.filter(n => !n.readBy?.includes(user.uid)).length : 0;
       
+      // 修正：移除 userId 篩選，讓所有人都能看到銀行交易紀錄 (這樣刷新後紀錄才不會消失)
       const bankTransactions = useMemo(() => {
-          return submissions.filter(s => s.userId === user?.uid && (s.description.includes('金庫') || s.description.includes('利息'))).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-      }, [submissions, user]);
+          return submissions.filter(s => (s.description.includes('金庫') || s.description.includes('利息'))).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+      }, [submissions]);
 
       const wheelTotalWeight = useMemo(() => {
           return gameSettings.wheelSegments.reduce((sum, s) => sum + (s.weight || 0), 0);
