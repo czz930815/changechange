@@ -277,34 +277,34 @@
 
     const ScratchCell = ({ value, canScratch, onRevealed, isRevealed }) => {
       const canvasRef = useRef(null);
-      // 使用 ref 來避免重複觸發，且不使用 useState 來避免重新渲染導致畫布重置
+      // 使用 ref 來避免重複觸發
       const hasTriggeredRef = useRef(false);
 
-      // 當後端資料確認已刮開 (isRevealed = true) 時，清除畫布
+      // 初始化與狀態變更時的繪圖邏輯
       useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
 
         if (isRevealed) {
-            // 已刮開：清除畫布
+            // 如果已揭示，直接清空，確保不會畫上銀漆
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         } else {
-            // 未刮開：重置銀漆層
-            hasTriggeredRef.current = false; // 重置觸發狀態
+            // 只有在「未揭示」且「畫布尚未被刮開」時才畫銀漆
+            // 這裡不做複雜判斷，只要是 false 就畫，確保重置時正確
+            hasTriggeredRef.current = false; 
             
-            ctx.globalCompositeOperation = 'source-over'; // 恢復正常繪圖模式
-            ctx.fillStyle = '#94a3b8'; // 銀灰色
+            ctx.globalCompositeOperation = 'source-over'; 
+            ctx.fillStyle = '#94a3b8'; 
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // 加入一些紋理或文字讓它看起來像刮刮樂
             ctx.fillStyle = '#e2e8f0';
             ctx.font = 'bold 24px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('?', canvas.width/2, canvas.height/2);
         }
-      }, [isRevealed]); 
+      }, [isRevealed]); // 依賴 isRevealed，確保資料庫同步時畫面正確更新
 
       const scratch = (clientX, clientY) => {
         const canvas = canvasRef.current;
@@ -314,12 +314,11 @@
         const y = clientY - rect.top;
 
         const ctx = canvas.getContext('2d');
-        ctx.globalCompositeOperation = 'destination-out'; // 設定為「擦除」模式
+        ctx.globalCompositeOperation = 'destination-out'; 
         ctx.beginPath();
-        ctx.arc(x, y, 12, 0, Math.PI * 2); // 筆刷大小
+        ctx.arc(x, y, 12, 0, Math.PI * 2); 
         ctx.fill();
 
-        // 只要有刮除動作，就觸發後端邏輯 (只觸發一次)
         if (!hasTriggeredRef.current) {
             hasTriggeredRef.current = true;
             onRevealed(value);
@@ -331,14 +330,15 @@
             <div className="scratch-content flex items-center justify-center font-bold text-xl text-deep-blue h-full w-full bg-white select-none">
                 {value}
             </div>
+            {/* 如果已揭示，透過 CSS 隱藏 canvas，作為雙重保險 */}
             <canvas
                 ref={canvasRef}
                 width={80}
                 height={80}
-                className="scratch-canvas absolute top-0 left-0 w-full h-full z-10"
+                className={`scratch-canvas absolute top-0 left-0 w-full h-full z-10 ${isRevealed ? 'invisible' : 'visible'}`}
                 style={{ 
-                    touchAction: 'none', // 關鍵：防止手機捲動
-                    opacity: isRevealed ? 0 : 1, // 刮開後淡出
+                    touchAction: 'none', 
+                    opacity: isRevealed ? 0 : 1, 
                     pointerEvents: isRevealed ? 'none' : 'auto',
                     transition: 'opacity 0.5s ease-out'
                 }}
@@ -884,12 +884,13 @@
             });
 
             // 2. 更新進度 (如果文檔不存在會自動創建 merge: true)
+            // 修正：移除 won: false，避免覆蓋既有的中獎狀態
             await setDoc(progRef, {
                 gameId: game.id,
                 userId: user.uid,
                 revealedIndices: arrayUnion(idx),
-                timestamp: serverTimestamp(),
-                won: false // 預設
+                timestamp: serverTimestamp()
+                // 注意：這裡不傳入 won 欄位，以免覆蓋
             }, { merge: true });
 
             // 3. 判斷輸贏
