@@ -46,6 +46,22 @@
     .marquee span { display: inline-block; padding-left: 100%; animation: marquee 25s linear infinite; }
     @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
+    /* 骰子動畫 */
+    @keyframes shake { 
+        0% { transform: translate(1px, 1px) rotate(0deg); }
+        10% { transform: translate(-1px, -2px) rotate(-1deg); }
+        20% { transform: translate(-3px, 0px) rotate(1deg); }
+        30% { transform: translate(3px, 2px) rotate(0deg); }
+        40% { transform: translate(1px, -1px) rotate(1deg); }
+        50% { transform: translate(-1px, 2px) rotate(-1deg); }
+        60% { transform: translate(-3px, 1px) rotate(0deg); }
+        70% { transform: translate(3px, 1px) rotate(-1deg); }
+        80% { transform: translate(-1px, -1px) rotate(1deg); }
+        90% { transform: translate(1px, 2px) rotate(0deg); }
+        100% { transform: translate(1px, -2px) rotate(-1deg); }
+    }
+    .dice-shake { animation: shake 0.5s infinite; }
+
     /* --- 高級配色系統 --- */
     
     .luxury-bg { 
@@ -251,9 +267,10 @@
         Target: (<Fragment><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Fragment>),
         Disc: (<Fragment><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 0 0 0 20"/><path d="M12 12 2.3 10.5"/><path d="M12 12l9.7-1.5"/></Fragment>),
         PiggyBank: (<Fragment><path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5c-3 3-5 3-5 3s-0.5-2.3 3-5l2.5-2.5c1-1 2.5-1.5 4-1.5 2.5 0 4.8 1.5 5.8 3.5H19z"/><path d="M19 5h-1"/><path d="M22 9c0 5-4 9-9 9s-9-4-9-9c0-3.3 2-6.2 4.9-7.9l0.9 0.9C7.5 3.1 6 5.4 6 8c0 3.3 2.7 6 6 6s6-2.7 6-6c0-2-0.8-3.8-2.2-5l0.7-0.7c3.1 1.7 5.5 5 5.5 6.7z"/></Fragment>),
-        Sparkles: (<Fragment><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M9 3v4M3 5h4M3 9h4"/></Fragment>),
+        Sparkles: (<Fragment><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M9 3v4M3 5h4M3 9h4"/></Fragment>),
         Edit: (<Fragment><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></Fragment>),
         ArrowLeft: (<Fragment><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></Fragment>),
+        Square: (<Fragment><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></Fragment>),
       };
       return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name] || null}</svg>;
     };
@@ -372,7 +389,19 @@
         { label: "20 點", value: 20, type: "point", color: "#93c5fd", weight: 5 }
       ];
 
-      const [gameSettings, setGameSettings] = useState({ wheelCost: 20, wheelSegments: defaultWheelSegments, rpsCost: 10, rpsWinMultiplier: 2, bankRate: 0.05, bankLockHours: 24, checkInPoints: 2, missions: [] });
+      // 新增 diceWinMultiplier, rpsWinRate, diceWinRate 預設值
+      const [gameSettings, setGameSettings] = useState({ 
+          wheelCost: 20, 
+          wheelSegments: defaultWheelSegments, 
+          rpsCost: 10, 
+          rpsWinMultiplier: 2, 
+          rpsWinRate: 0.33, // 預設 33%
+          diceWinMultiplier: 2, // 預設 1賠1 (總共拿回2倍)
+          diceWinRate: 0.48, // 預設 48%
+          bankRate: 0.05, 
+          bankLockHours: 24, 
+          checkInPoints: 2 
+      });
       const [pendingSettings, setPendingSettings] = useState(null);
 
       const [savings, setSavings] = useState({ balance: 0, lastInterestTime: null, lastDepositTime: null });
@@ -382,6 +411,12 @@
       const [rpsUserChoice, setRpsUserChoice] = useState(null);
       const [rpsCpuChoice, setRpsCpuChoice] = useState(null);
       const [rpsBetAmount, setRpsBetAmount] = useState(10); 
+
+      // Dice Game State
+      const [diceValues, setDiceValues] = useState([1, 1, 1]);
+      const [isDiceRolling, setIsDiceRolling] = useState(false);
+      const [diceBetTarget, setDiceBetTarget] = useState('big'); // 'big' or 'small'
+      const [diceBetAmount, setDiceBetAmount] = useState(10);
 
       const [desc, setDesc] = useState('');
       const [selectedFile, setSelectedFile] = useState(null);
@@ -398,10 +433,6 @@
       const [adminRewardImage, setAdminRewardImage] = useState(null);
       const [isAddingReward, setIsAddingReward] = useState(false);
 
-      const [newMissionTitle, setNewMissionTitle] = useState('');
-      const [newMissionTarget, setNewMissionTarget] = useState('');
-      const [newMissionReward, setNewMissionReward] = useState('');
-      const [newMissionType, setNewMissionType] = useState('streak');
       const [scratchActivities, setScratchActivities] = useState([]);
       const [selectedScratchGame, setSelectedScratchGame] = useState(null); 
       const [canScratchNow, setCanScratchNow] = useState(false);
@@ -418,7 +449,6 @@
       const [givePointsReason, setGivePointsReason] = useState('');
       const [givePointsAmount, setGivePointsAmount] = useState('');
       
-      // Added missing states
       const [wishImage, setWishImage] = useState(null);
       const [isWishing, setIsWishing] = useState(false);
 
@@ -529,6 +559,116 @@
         }, 3000);
       };
 
+      // Dice Logic
+      const handleRollDice = async () => {
+          const cost = parseInt(diceBetAmount);
+          if (isNaN(cost) || cost < 10) return alert("最低下注 10 P");
+          if (points < cost) return alert(`點數不足！需要 ${cost} P`);
+          if (isDiceRolling) return;
+
+          setIsDiceRolling(true);
+          
+          // Deduct points (the bet)
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-cost), totalRedeemed: increment(cost) });
+          await addDoc(getPublicRef('submissions'), { description: `🎲 骰子大師 (下注${cost})`, status: 'scratch', awardedPoints: -cost, timestamp: serverTimestamp(), userId: user.uid });
+
+          // Animation simulation
+          let steps = 20;
+          const interval = setInterval(() => {
+              setDiceValues([
+                  Math.floor(Math.random() * 6) + 1,
+                  Math.floor(Math.random() * 6) + 1,
+                  Math.floor(Math.random() * 6) + 1
+              ]);
+              steps--;
+              if (steps <= 0) {
+                  clearInterval(interval);
+                  finalizeDice(cost);
+              }
+          }, 100);
+      };
+
+      // 輔助函式：產生指定總和範圍的骰子
+      const generateDiceForSum = (min, max) => {
+          let d1, d2, d3, sum;
+          do {
+              d1 = Math.floor(Math.random() * 6) + 1;
+              d2 = Math.floor(Math.random() * 6) + 1;
+              d3 = Math.floor(Math.random() * 6) + 1;
+              sum = d1 + d2 + d3;
+          } while (sum < min || sum > max || (d1 === d2 && d2 === d3)); // 避免圍骰 (除非是針對圍骰邏輯)
+          return [d1, d2, d3];
+      };
+
+      // 輔助函式：產生圍骰
+      const generateTriple = () => {
+          const v = Math.floor(Math.random() * 6) + 1;
+          return [v, v, v];
+      };
+
+      const finalizeDice = async (cost) => {
+          // 根據勝率決定結果
+          const winRate = gameSettings.diceWinRate !== undefined ? gameSettings.diceWinRate : 0.48;
+          const isWin = Math.random() < winRate;
+          
+          let d1, d2, d3;
+          
+          if (isWin) {
+              // 強制贏：如果押大，產生11-17；如果押小，產生4-10
+              if (diceBetTarget === 'big') {
+                  [d1, d2, d3] = generateDiceForSum(11, 17);
+              } else {
+                  [d1, d2, d3] = generateDiceForSum(4, 10);
+              }
+          } else {
+              // 強制輸：
+              // 1. 小機率出圍骰通殺 (例如 10%)
+              // 2. 否則出相反結果
+              if (Math.random() < 0.1) {
+                  [d1, d2, d3] = generateTriple();
+              } else {
+                  if (diceBetTarget === 'big') {
+                      [d1, d2, d3] = generateDiceForSum(4, 10); // 押大出小
+                  } else {
+                      [d1, d2, d3] = generateDiceForSum(11, 17); // 押小出大
+                  }
+              }
+          }
+
+          const sum = d1 + d2 + d3;
+          
+          setDiceValues([d1, d2, d3]);
+          setIsDiceRolling(false);
+
+          let result = '';
+          let isTriple = (d1 === d2 && d2 === d3);
+
+          if (isTriple) {
+              result = 'triple'; 
+          } else if (sum >= 4 && sum <= 10) {
+              result = 'small';
+          } else if (sum >= 11 && sum <= 17) {
+              result = 'big';
+          }
+
+          // 重新確認最終是否獲勝 (雖然前面有控制，但以實際骰子為準)
+          let finalIsWin = false;
+          if (!isTriple && result === diceBetTarget) {
+              finalIsWin = true;
+          }
+
+          if (finalIsWin) {
+              const multiplier = gameSettings.diceWinMultiplier || 2;
+              const winAmount = Math.floor(cost * multiplier); 
+              await addDoc(getPublicRef('submissions'), { description: `🎲 骰子大師中獎 (${result === 'big' ? '大' : '小'})`, status: 'bonus', awardedPoints: winAmount, timestamp: serverTimestamp(), userId: user.uid });
+              await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(winAmount), totalIssued: increment(winAmount) });
+              alert(`🎉 恭喜！開出 ${sum} 點 (${result === 'big' ? '大' : '小'})，贏得 ${winAmount} 點！`);
+          } else {
+              let reason = isTriple ? `圍骰 ${d1}-${d2}-${d3} 通殺！` : `開出 ${sum} 點 (${result === 'big' ? '大' : '小'})`;
+              alert(`😢 很遺憾... ${reason}`);
+          }
+      };
+
       const handlePlayRPS = async (choice) => {
           const bet = parseInt(rpsBetAmount);
           if (isNaN(bet) || bet < 2) return alert("最低下注點數為 2 點");
@@ -541,18 +681,41 @@
           await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-bet), totalRedeemed: increment(bet) });
           
           setTimeout(async () => {
-              const cpu = ['rock', 'paper', 'scissors'][Math.floor(Math.random() * 3)];
-              setRpsCpuChoice(cpu);
-              let res = 'draw';
-              if((choice === 'rock' && cpu === 'scissors') || (choice === 'paper' && cpu === 'rock') || (choice === 'scissors' && cpu === 'paper')) res = 'win';
-              else if (choice !== cpu) res = 'lose';
+              // 根據勝率決定結果
+              const winRate = gameSettings.rpsWinRate !== undefined ? gameSettings.rpsWinRate : 0.33;
+              const rand = Math.random();
               
-              if(res === 'win') {
+              let resultType = 'lose';
+              if (rand < winRate) {
+                  resultType = 'win';
+              } else if (rand < winRate + ((1 - winRate) / 2)) {
+                  resultType = 'draw';
+              } else {
+                  resultType = 'lose';
+              }
+
+              // 根據結果決定 CPU 出拳
+              let cpuChoice = '';
+              const map = { 'rock': 'scissors', 'paper': 'rock', 'scissors': 'paper' }; // Key wins Value
+              
+              if (resultType === 'win') {
+                  cpuChoice = map[choice]; // 玩家贏，CPU 出輸的
+              } else if (resultType === 'draw') {
+                  cpuChoice = choice; // 平手
+              } else {
+                  // 玩家輸，CPU 出贏的
+                  // 找 map 中誰贏 choice
+                  cpuChoice = Object.keys(map).find(key => map[key] === choice);
+              }
+
+              setRpsCpuChoice(cpuChoice);
+              
+              if(resultType === 'win') {
                   const winPts = Math.floor(bet * gameSettings.rpsWinMultiplier);
                   await addDoc(getPublicRef('submissions'), { description: `✊ 猜拳獲勝 (下注 ${bet})`, status: 'bonus', awardedPoints: winPts, timestamp: serverTimestamp(), userId: user.uid });
                   await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(winPts), totalIssued: increment(winPts) });
                   alert(`獲勝！贏得 ${winPts} 點`);
-              } else if (res === 'draw') {
+              } else if (resultType === 'draw') {
                   await addDoc(getPublicRef('submissions'), { description: `✊ 猜拳平手 (退費 ${bet})`, status: 'bonus', awardedPoints: bet, timestamp: serverTimestamp(), userId: user.uid });
                   await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(bet), totalIssued: increment(bet) });
                   alert("平手！點數退還");
@@ -623,13 +786,10 @@
       };
       
       const updateWheelSegment = (idx, field, val) => { const ms = [...pendingSettings.wheelSegments]; ms[idx] = {...ms[idx], [field]: val}; setPendingSettings({...pendingSettings, wheelSegments: ms}); };
-      const addMission = () => { if(!newMissionTitle || !newMissionTarget) return; const newM = { id: 'm'+Date.now(), title: newMissionTitle, target: parseInt(newMissionTarget), reward: parseInt(newMissionReward), type: newMissionType }; setPendingSettings({...pendingSettings, missions: [...(pendingSettings.missions||[]), newM]}); setNewMissionTitle(''); setNewMissionTarget(''); };
-      const removeMission = (i) => { const ms = [...pendingSettings.missions]; ms.splice(i, 1); setPendingSettings({...pendingSettings, missions: ms}); };
       const deleteItem = async (col, id, name) => { if(confirm("確定刪除?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', col, id)); };
       const handleVerifyCoupon = async (id) => { if(confirm("核銷?")) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', id), {status:'verified'}); };
       const updateAnnounce = async () => { const t = prompt("新公告:", announcement); if(t) await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'announce'), {text: t}); };
       
-      // Fixed handleMakeWish to use correct states
       const handleMakeWish = async () => { 
           if(wishName) { 
               setIsWishing(true); 
@@ -773,30 +933,6 @@
       const myWishes = useMemo(() => rewards.filter(r => !r.available && (r.userId === user?.uid || !r.userId)), [rewards, user]);
       const unreadCount = user ? notifications.filter(n => !n.readBy?.includes(user.uid)).length : 0;
       
-      const missionProg = useMemo(() => {
-          const mySubs = submissions.filter(s => s.userId === user?.uid);
-          const totalEarned = mySubs.reduce((acc, curr) => acc + (curr.awardedPoints > 0 ? curr.awardedPoints : 0), 0);
-          const checkins = [...new Set(mySubs.filter(s => s.status === 'checkin').map(s => new Date(s.timestamp?.seconds*1000).toDateString()))];
-          const claimed = new Set(mySubs.filter(s => s.status === 'mission_reward').map(s => s.missionId));
-          return { streak: checkins.length, total: totalEarned, claimed };
-      }, [submissions, user]);
-
-      const handleClaimMission = async (m) => {
-         if(missionProg.claimed && missionProg.claimed.has(m.id)) return;
-         try {
-             await addDoc(getPublicRef('submissions'), { 
-                 description: `🎯 達成任務：${m.title}`, 
-                 status: 'mission_reward', 
-                 awardedPoints: m.reward, 
-                 missionId: m.id,
-                 timestamp: serverTimestamp(), 
-                 userId: user.uid 
-             });
-             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(m.reward), totalIssued: increment(m.reward) });
-             alert(`恭喜！領取 ${m.reward} 點`);
-         } catch(e) { alert("領取失敗"); }
-      };
-
       const bankTransactions = useMemo(() => {
           return submissions.filter(s => s.userId === user?.uid && (s.description.includes('金庫') || s.description.includes('利息'))).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
       }, [submissions, user]);
@@ -899,9 +1035,9 @@
                            <div className="relative z-10 flex items-center gap-4"><Icon name="PiggyBank" size={32} className="text-emerald-500"/><div className="text-left"><p className="text-sm font-bold text-deep-blue uppercase tracking-widest">點數小金庫</p><p className="text-[10px] text-label">存點生利息</p></div></div>
                            <Icon name="ArrowLeft" size={16} className="rotate-180 text-slate-300"/>
                         </div>
-                        <div onClick={() => setCurrentActivity('missions')} className="luxury-card p-6 h-28 flex items-center justify-between border-slate-100 hover:-translate-y-1 transition-all group cursor-pointer relative overflow-hidden">
+                        <div onClick={() => setCurrentActivity('dice')} className="luxury-card p-6 h-28 flex items-center justify-between border-slate-100 hover:-translate-y-1 transition-all group cursor-pointer relative overflow-hidden">
                            <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-amber-50 rounded-full group-hover:scale-110 transition-transform z-0"></div>
-                           <div className="relative z-10 flex items-center gap-4"><Icon name="Target" size={32} className="text-amber-500"/><div className="text-left"><p className="text-sm font-bold text-deep-blue uppercase tracking-widest">任務佈告欄</p><p className="text-[10px] text-label">達成目標領取獎勵</p></div></div>
+                           <div className="relative z-10 flex items-center gap-4"><Icon name="Dice" size={32} className="text-amber-500"/><div className="text-left"><p className="text-sm font-bold text-deep-blue uppercase tracking-widest">骰子大師</p><p className="text-[10px] text-label">買大買小贏獎金</p></div></div>
                            <Icon name="ArrowLeft" size={16} className="rotate-180 text-slate-300"/>
                         </div>
                         <div onClick={() => setCurrentActivity('scratch_list')} className="luxury-card p-6 h-28 flex items-center justify-between border-slate-100 hover:-translate-y-1 transition-all group cursor-pointer relative overflow-hidden">
@@ -998,31 +1134,33 @@
                            </div>
                         </div>
                      </div>
-                  ) : currentActivity === 'missions' ? (
-                     <div className="luxury-card p-8 rounded-[40px] animate-in">
-                        <button onClick={() => setCurrentActivity(null)} className="mb-6 text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-3 py-1.5 rounded-full">← 返回</button>
-                        <h2 className="font-bold text-deep-blue text-lg mb-8 border-l-2 border-slate-800 pl-4">任務進度</h2>
-                        <div className="space-y-5">
-                           {gameSettings.missions && gameSettings.missions.map(m => {
-                              let prog = m.type === 'streak' ? missionProg.streak : missionProg.total;
-                              let pct = Math.min(prog / m.target * 100, 100);
-                              let isClaimed = missionProg.claimed && missionProg.claimed.has(m.id);
-                              return (
-                                 <div key={m.id} className="bg-slate-50 p-5 rounded-[25px] border border-slate-100 space-y-4">
-                                    <div className="flex justify-between items-center"><span className="text-xs font-bold text-deep-blue">{m.title}</span><span className="text-[10px] font-bold text-luxury-gold">+{m.reward}P</span></div>
-                                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden"><div className="luxury-gold-bg h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%` }}></div></div>
-                                    <div className="flex justify-between items-center">
-                                       <span className="text-label">進度: {prog} / {m.target}</span>
-                                       {pct >= 100 ? (
-                                             isClaimed ? 
-                                             <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">已領取</span> : 
-                                             <button onClick={() => handleClaimMission(m)} className="btn-gold px-3 py-1 rounded-full text-[10px] shadow-md">領取獎勵</button>
-                                       ) : <span className="text-[10px] text-slate-400">進行中</span>}
-                                    </div>
-                                 </div>
-                              );
-                           })}
+                  ) : currentActivity === 'dice' ? (
+                     <div className="luxury-card p-8 rounded-[40px] animate-in text-center">
+                        <button onClick={() => setCurrentActivity(null)} className="self-start mb-6 text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-3 py-1.5 rounded-full">← 返回</button>
+                        <h2 className="font-bold text-deep-blue text-lg mb-2">骰子大師 (Sic Bo)</h2>
+                        <div className="bg-slate-50 p-4 rounded-xl mb-8 border border-slate-100 flex flex-col gap-2">
+                           <div className="flex justify-between text-[10px] text-label tracking-wide">
+                              <span>下注金額 (最少10點)</span>
+                              <span>賠率: 1賠1</span>
+                           </div>
+                           <input type="number" className="settings-input text-center text-lg font-bold" value={diceBetAmount} onChange={e => setDiceBetAmount(Math.max(10, parseInt(e.target.value)))} />
                         </div>
+
+                        <div className="flex gap-4 justify-center mb-8 h-20 items-center">
+                           {diceValues.map((v, i) => (
+                              <div key={i} className={`w-16 h-16 bg-white rounded-xl shadow-md border border-slate-200 flex items-center justify-center text-4xl text-deep-blue ${isDiceRolling ? 'dice-shake' : ''}`}>
+                                 {['⚀','⚁','⚂','⚃','⚄','⚅'][v-1]}
+                              </div>
+                           ))}
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                           <button onClick={() => setDiceBetTarget('big')} className={`py-4 rounded-xl font-bold text-lg uppercase shadow-md transition-all ${diceBetTarget === 'big' ? 'bg-indigo-600 text-white ring-2 ring-indigo-300' : 'bg-white text-indigo-600 border border-indigo-100'}`}>大 (11-17)</button>
+                           <button onClick={() => setDiceBetTarget('small')} className={`py-4 rounded-xl font-bold text-lg uppercase shadow-md transition-all ${diceBetTarget === 'small' ? 'bg-amber-500 text-white ring-2 ring-amber-300' : 'bg-white text-amber-600 border border-amber-100'}`}>小 (4-10)</button>
+                        </div>
+
+                        <button onClick={handleRollDice} disabled={isDiceRolling} className="w-full btn-primary py-4 rounded-xl font-bold text-xs uppercase tracking-widest shadow-xl">{isDiceRolling ? '擲骰中...' : '下注並擲骰'}</button>
+                        <p className="text-[10px] text-slate-400 mt-4">*圍骰 (三顆點數相同) 莊家通殺</p>
                      </div>
                   ) : currentActivity === 'scratch_list' ? (
                       <div className="animate-in">
@@ -1181,13 +1319,20 @@
                   </div>
 
                   <div className="luxury-card p-7 rounded-[35px] space-y-6">
-                     <h3 className="font-bold flex items-center gap-3 text-deep-blue text-xs tracking-widest uppercase">遊戲參數與任務設定</h3>
+                     <h3 className="font-bold flex items-center gap-3 text-deep-blue text-xs tracking-widest uppercase">遊戲參數設定</h3>
                      <div className="grid grid-cols-2 gap-4">
                        <div><label className="settings-label">轉盤費用</label><input type="number" className="settings-input" value={pendingSettings?.wheelCost} onChange={e => setPendingSettings({...pendingSettings, wheelCost: parseInt(e.target.value)})} /></div>
                        <div><label className="settings-label">打卡獎勵</label><input type="number" className="settings-input" value={pendingSettings?.checkInPoints} onChange={e => setPendingSettings({...pendingSettings, checkInPoints: parseInt(e.target.value)})} /></div>
                        <div><label className="settings-label">金庫日利率</label><input type="number" step="0.01" className="settings-input" value={pendingSettings?.bankRate} onChange={e => setPendingSettings({...pendingSettings, bankRate: parseFloat(e.target.value)})} /></div>
                        <div><label className="settings-label">金庫閉鎖(時)</label><input type="number" className="settings-input" value={pendingSettings?.bankLockHours} onChange={e => setPendingSettings({...pendingSettings, bankLockHours: parseInt(e.target.value)})} /></div>
-                       <div><label className="settings-label">猜拳倍率</label><input type="number" step="0.1" className="settings-input" value={pendingSettings?.rpsWinMultiplier} onChange={e => setPendingSettings({...pendingSettings, rpsWinMultiplier: parseFloat(e.target.value)})} /></div>
+                       
+                       <div className="col-span-2 border-t border-slate-100 my-2"></div>
+                       
+                       <div><label className="settings-label">猜拳倍率 (預設2.0)</label><input type="number" step="0.1" className="settings-input" value={pendingSettings?.rpsWinMultiplier} onChange={e => setPendingSettings({...pendingSettings, rpsWinMultiplier: parseFloat(e.target.value)})} /></div>
+                       <div><label className="settings-label text-rose-500">猜拳勝率 (0.1~0.9)</label><input type="number" step="0.01" className="settings-input border-rose-200" value={pendingSettings?.rpsWinRate} onChange={e => setPendingSettings({...pendingSettings, rpsWinRate: parseFloat(e.target.value)})} /></div>
+                       
+                       <div><label className="settings-label">骰子倍率 (預設2.0)</label><input type="number" step="0.1" className="settings-input" value={pendingSettings?.diceWinMultiplier} onChange={e => setPendingSettings({...pendingSettings, diceWinMultiplier: parseFloat(e.target.value)})} /></div>
+                       <div><label className="settings-label text-rose-500">骰子勝率 (0.1~0.9)</label><input type="number" step="0.01" className="settings-input border-rose-200" value={pendingSettings?.diceWinRate} onChange={e => setPendingSettings({...pendingSettings, diceWinRate: parseFloat(e.target.value)})} /></div>
                      </div>
                      
                      <div className="border-t border-slate-100 pt-6">
@@ -1202,27 +1347,6 @@
                                 <input type="number" className="settings-input w-1/4 border-amber-200" value={s.weight || 1} onChange={e => updateWheelSegment(i, 'weight', parseInt(e.target.value) || 1)} placeholder="權重" />
                              </div>
                            ))}
-                        </div>
-                        <p className="settings-label">任務管理</p>
-                        <div className="space-y-2 mb-4">
-                           {pendingSettings?.missions?.map((m, i) => (
-                              <div key={m.id} className="flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                                 <div className="flex-1 text-[10px] font-bold text-slate-600 truncate">{m.title} ({m.reward}P)</div>
-                                 <button onClick={() => removeMission(i)} className="text-rose-400 p-1 hover:bg-rose-50 rounded"><Icon name="Trash2" size={14}/></button>
-                              </div>
-                           ))}
-                        </div>
-                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                           <input className="settings-input" placeholder="任務標題" value={newMissionTitle} onChange={e => setNewMissionTitle(e.target.value)} />
-                           <div className="grid grid-cols-3 gap-2">
-                              <input type="number" className="settings-input" placeholder="目標數" value={newMissionTarget} onChange={e => setNewMissionTarget(e.target.value)} />
-                              <input type="number" className="settings-input" placeholder="獎勵點" value={newMissionReward} onChange={e => setNewMissionReward(e.target.value)} />
-                              <select className="settings-input text-[10px] font-bold" value={newMissionType} onChange={e => setNewMissionType(e.target.value)}>
-                                 <option value="streak">連續天數</option>
-                                 <option value="total">累計點數</option>
-                              </select>
-                           </div>
-                           <button onClick={addMission} className="w-full py-2 btn-primary rounded-lg text-[10px] font-bold uppercase tracking-widest">加入任務</button>
                         </div>
                      </div>
                      <button onClick={handleSaveGameSettings} className="w-full py-4 btn-primary rounded-xl font-bold text-xs uppercase tracking-widest shadow-xl">儲存全系統設定</button>
