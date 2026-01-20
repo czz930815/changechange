@@ -468,7 +468,10 @@
                 setPendingSettings(prev => prev ? prev : gameSettings); 
             } 
         });
-        const unsubSavings = onSnapshot(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), (d) => { if(d.exists()) setSavings(d.data()); else setSavings({ balance: 0, lastInterestTime: null, lastDepositTime: null }); });
+        
+        // 修正：金庫改為公共路徑，避免 ID 改變導致資料遺失
+        const unsubSavings = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'savings', 'account'), (d) => { if(d.exists()) setSavings(d.data()); else setSavings({ balance: 0, lastInterestTime: null, lastDepositTime: null }); });
+        
         const unsubScratch = onSnapshot(getPublicRef('scratch_activities'), (s) => setScratchActivities(s.docs.map(d => ({id: d.id, ...d.data()}))));
         const unsubAnnounce = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'announce'), (d) => { if (d.exists()) setAnnouncement(d.data().text); });
         const unsubNotifs = onSnapshot(getPublicRef('notifications'), (s) => setNotifications(s.docs.map(d => ({id: d.id, ...d.data()}))));
@@ -731,8 +734,8 @@
         const amt = parseInt(prompt("存入金額:"));
         if(!amt || points < amt) return;
         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-amt), totalRedeemed: increment(amt) });
-        // 修正：使用 atomic increment 確保餘額準確累積，避免覆寫
-        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), { balance: increment(amt), lastDepositTime: serverTimestamp() }, { merge: true });
+        // 修正：使用 atomic increment 確保餘額準確累積，避免覆寫，並使用公共路徑
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'savings', 'account'), { balance: increment(amt), lastDepositTime: serverTimestamp() }, { merge: true });
         await addDoc(getPublicRef('submissions'), { description: "🏦 存入小金庫", status: 'deducted', awardedPoints: -amt, timestamp: serverTimestamp(), userId: user.uid });
         alert("存入成功");
       };
@@ -746,8 +749,8 @@
         const amt = parseInt(prompt("提領金額:"));
         if(!amt || (savings.balance || 0) < amt) return;
         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(amt), totalIssued: increment(amt) });
-        // 修正：使用 atomic increment 處理提款
-        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), { balance: increment(-amt) }, { merge: true });
+        // 修正：使用 atomic increment 處理提款，並使用公共路徑
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'savings', 'account'), { balance: increment(-amt) }, { merge: true });
         await addDoc(getPublicRef('submissions'), { description: "🏦 金庫提款", status: 'bonus', awardedPoints: amt, timestamp: serverTimestamp(), userId: user.uid });
         alert("提領成功");
       };
@@ -757,8 +760,8 @@
         if(Date.now() - lastTime < 86400000) return alert("每日只能領取一次利息");
         const interest = Math.floor((savings.balance || 0) * (gameSettings.bankRate || 0.05));
         if(interest <= 0) return alert("本金過低無利息");
-        // 修正：使用 atomic increment 處理利息
-        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), { balance: increment(interest), lastInterestTime: serverTimestamp() }, { merge: true });
+        // 修正：使用 atomic increment 處理利息，並使用公共路徑
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'savings', 'account'), { balance: increment(interest), lastInterestTime: serverTimestamp() }, { merge: true });
         await addDoc(getPublicRef('submissions'), { description: "💰 金庫利息", status: 'bonus', awardedPoints: interest, timestamp: serverTimestamp(), userId: user.uid });
         alert(`領取利息：${interest} 點`);
       };
