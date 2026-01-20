@@ -5,12 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Point | 應有盡有大超商</title>
   
+  <!-- 防止 favicon 404 錯誤 -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
+  
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
   
   <script src="https://cdn.tailwindcss.com"></script>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- 改用 CDNJS 以獲得更好的穩定性 -->
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
   
   <style>
     /* 全域字體設定 - 保持纖細高級感 */
@@ -99,6 +103,16 @@
       box-shadow: 0 4px 10px rgba(180, 83, 9, 0.3);
     }
 
+    .btn-luxury {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: white;
+      font-weight: 600;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(15, 23, 42, 0.3);
+      transition: all 0.2s;
+    }
+    .btn-luxury:active { transform: scale(0.98); }
+
     /* 輸入框 - 縮小字體以符合後台需求 */
     .settings-input {
         background: #f8fafc;
@@ -184,9 +198,10 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, setPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc, arrayUnion, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    // Updated to version 11.0.2 for better compatibility
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, setPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getFirestore, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc, arrayUnion, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
     const statusEl = document.getElementById('loading-status');
     const retryBtn = document.getElementById('retry-btn');
@@ -236,7 +251,7 @@
         Target: (<Fragment><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Fragment>),
         Disc: (<Fragment><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 0 0 0 20"/><path d="M12 12 2.3 10.5"/><path d="M12 12l9.7-1.5"/></Fragment>),
         PiggyBank: (<Fragment><path d="M19 5c-1.5 0-2.8 0.6-3.8 1.5l-2.5 2.5c-3 3-5 3-5 3s-0.5-2.3 3-5l2.5-2.5c1-1 2.5-1.5 4-1.5 2.5 0 4.8 1.5 5.8 3.5H19z"/><path d="M19 5h-1"/><path d="M22 9c0 5-4 9-9 9s-9-4-9-9c0-3.3 2-6.2 4.9-7.9l0.9 0.9C7.5 3.1 6 5.4 6 8c0 3.3 2.7 6 6 6s6-2.7 6-6c0-2-0.8-3.8-2.2-5l0.7-0.7c3.1 1.7 5.5 5 5.5 6.7z"/></Fragment>),
-        Sparkles: (<Fragment><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M9 3v4M3 5h4M3 9h4"/></Fragment>),
+        Sparkles: (<Fragment><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M9 3v4M3 5h4M3 9h4"/></Fragment>),
         Edit: (<Fragment><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></Fragment>),
         ArrowLeft: (<Fragment><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></Fragment>),
       };
@@ -283,7 +298,7 @@
     };
 
     function App() {
-      const { db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc, arrayUnion, appId, onAuthStateChanged } = window.fb;
+      const { db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc, arrayUnion, getDoc, appId, onAuthStateChanged } = window.fb;
       const [user, setUser] = useState(null);
       const [activeTab, setActiveTab] = useState('home');
       const [currentActivity, setCurrentActivity] = useState(null); 
@@ -350,6 +365,10 @@
       const [editingScratchId, setEditingScratchId] = useState(null);
       const [givePointsReason, setGivePointsReason] = useState('');
       const [givePointsAmount, setGivePointsAmount] = useState('');
+      
+      // Added missing states
+      const [wishImage, setWishImage] = useState(null);
+      const [isWishing, setIsWishing] = useState(false);
 
       const getPublicRef = (name) => collection(db, 'artifacts', appId, 'public', 'data', name);
 
@@ -358,12 +377,10 @@
         const unsubStats = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), (d) => { if (d.exists()) { setPoints(d.data().totalPoints || 0); setStats({ totalIssued: d.data().totalIssued || 0, totalRedeemed: d.data().totalRedeemed || 0 }); } });
         const unsubSubs = onSnapshot(getPublicRef('submissions'), (s) => setSubmissions(s.docs.map(d => ({id: d.id, ...d.data()}))));
         const unsubRewards = onSnapshot(getPublicRef('rewards'), (s) => setRewards(s.docs.map(d => ({id: d.id, ...d.data()}))));
-        // Fix: Ensure we don't overwrite pendingSettings if user is editing, but we do need initial sync
         const unsubSettings = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'games'), (d) => { 
             if(d.exists()) { 
                 const data = d.data();
                 setGameSettings(data); 
-                // Only update pendingSettings if it's null (initial load) to avoid overwriting admin edits
                 setPendingSettings(prev => prev ? prev : data); 
             } else { 
                 setPendingSettings(prev => prev ? prev : gameSettings); 
@@ -378,7 +395,6 @@
         return () => { unsubStats(); unsubSubs(); unsubRewards(); unsubSettings(); unsubSavings(); unsubScratch(); unsubAnnounce(); unsubNotifs(); unsubScratchProg(); };
       }, [user]);
 
-      // Force refresh pending settings when entering admin mode to ensure sync
       useEffect(() => {
           if (activeTab === 'admin' && gameSettings) {
              setPendingSettings(gameSettings);
@@ -388,7 +404,13 @@
       useEffect(() => {
          if (!user || !selectedScratchGame) { setCurrentGameProgress([]); return; }
          return onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', `${selectedScratchGame.id}_${user.uid}`), (d) => {
-            if (d.exists()) setCurrentGameProgress(d.data().revealedIndices || []); else setCurrentGameProgress([]);
+            if (d.exists()) {
+                setCurrentGameProgress(d.data().revealedIndices || []);
+                setCanScratchNow(true); // If document exists, user has paid
+            } else {
+                setCurrentGameProgress([]);
+                setCanScratchNow(false);
+            }
          });
       }, [selectedScratchGame, user]);
 
@@ -427,7 +449,6 @@
         setWheelSpinning(true);
         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-cost), totalRedeemed: increment(cost) });
         
-        // Probability Logic
         const segments = gameSettings.wheelSegments;
         const totalWeight = segments.reduce((sum, s) => sum + (s.weight || 0), 0);
         let random = Math.random() * totalWeight;
@@ -437,12 +458,10 @@
             if(random <= 0) { winnerIndex = i; break; }
         }
 
-        // Calculate Angle
         const segmentDegree = 360 / segments.length; 
         const randomOffset = Math.floor(Math.random() * (segmentDegree - 10)) - (segmentDegree/2 - 5); 
         const targetAngle = (winnerIndex * segmentDegree) + (segmentDegree/2) + randomOffset; 
         
-        // Ensure always spins forward at least 5 times
         const finalRot = wheelRotation + 1800 + (360 - targetAngle - (wheelRotation % 360));
         
         setWheelRotation(finalRot);
@@ -497,8 +516,8 @@
         const amt = parseInt(prompt("存入金額:"));
         if(!amt || points < amt) return;
         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-amt), totalRedeemed: increment(amt) });
-        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), { balance: (savings.balance || 0) + amt, lastDepositTime: serverTimestamp() }, { merge: true });
-        // Record deposit
+        // 修正：使用 atomic increment 確保餘額準確累積，避免覆寫
+        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), { balance: increment(amt), lastDepositTime: serverTimestamp() }, { merge: true });
         await addDoc(getPublicRef('submissions'), { description: "🏦 存入小金庫", status: 'deducted', awardedPoints: -amt, timestamp: serverTimestamp(), userId: user.uid });
         alert("存入成功");
       };
@@ -512,8 +531,8 @@
         const amt = parseInt(prompt("提領金額:"));
         if(!amt || (savings.balance || 0) < amt) return;
         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(amt), totalIssued: increment(amt) });
-        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), { balance: (savings.balance || 0) - amt }, { merge: true });
-        // Record withdraw
+        // 修正：使用 atomic increment 處理提款
+        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), { balance: increment(-amt) }, { merge: true });
         await addDoc(getPublicRef('submissions'), { description: "🏦 金庫提款", status: 'bonus', awardedPoints: amt, timestamp: serverTimestamp(), userId: user.uid });
         alert("提領成功");
       };
@@ -523,8 +542,8 @@
         if(Date.now() - lastTime < 86400000) return alert("每日只能領取一次利息");
         const interest = Math.floor((savings.balance || 0) * (gameSettings.bankRate || 0.05));
         if(interest <= 0) return alert("本金過低無利息");
-        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), { balance: (savings.balance || 0) + interest, lastInterestTime: serverTimestamp() }, { merge: true });
-        // Record interest
+        // 修正：使用 atomic increment 處理利息
+        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'savings', 'account'), { balance: increment(interest), lastInterestTime: serverTimestamp() }, { merge: true });
         await addDoc(getPublicRef('submissions'), { description: "💰 金庫利息", status: 'bonus', awardedPoints: interest, timestamp: serverTimestamp(), userId: user.uid });
         alert(`領取利息：${interest} 點`);
       };
@@ -557,7 +576,24 @@
       const deleteItem = async (col, id, name) => { if(confirm("確定刪除?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', col, id)); };
       const handleVerifyCoupon = async (id) => { if(confirm("核銷?")) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', id), {status:'verified'}); };
       const updateAnnounce = async () => { const t = prompt("新公告:", announcement); if(t) await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'announce'), {text: t}); };
-      const handleMakeWish = async () => { if(wishName) { setIsWishing(true); const img = wishImage ? await compressImage(wishImage) : "https://placehold.co/400x300/e2e8f0/64748b?text=Wish"; await addDoc(getPublicRef('rewards'), {name: wishName, cost: 0, image: img, available: false, timestamp: serverTimestamp(), userId: user.uid}); setWishName(''); setIsWishing(false); alert("許願成功"); } };
+      
+      // Fixed handleMakeWish to use correct states
+      const handleMakeWish = async () => { 
+          if(wishName) { 
+              setIsWishing(true); 
+              try {
+                  const img = wishImage ? await compressImage(wishImage) : "https://placehold.co/400x300/e2e8f0/64748b?text=Wish"; 
+                  await addDoc(getPublicRef('rewards'), {name: wishName, cost: 0, image: img, available: false, timestamp: serverTimestamp(), userId: user.uid}); 
+                  setWishName(''); 
+                  setWishImage(null);
+                  alert("許願成功"); 
+              } catch(e) {
+                  alert("許願失敗");
+              } finally {
+                  setIsWishing(false); 
+              }
+          } 
+      };
       
       const handleGivePoints = async () => { 
         if(!givePointsAmount) return alert("請輸入點數");
@@ -586,6 +622,77 @@
       const handleAddScratchActivity = async () => { if(adminScratchTitle && adminScratchCost){ setIsAddingReward(true); const img = adminScratchImage ? await compressImage(adminScratchImage) : null; if(editingScratchId) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scratch_activities', editingScratchId), {title: adminScratchTitle, prize: adminScratchPrize, cost: parseInt(adminScratchCost), ...(img && {image: img})}); setEditingScratchId(null); } else { const grid = Array(16).fill(0); grid[adminScratchWinnerIndex] = parseInt(adminScratchTarget); let others = []; for(let i=1; i<=16; i++) if(i!==parseInt(adminScratchTarget)) others.push(i); others.sort(()=>Math.random()-0.5); let o=0; for(let i=0; i<16; i++) if(i!==parseInt(adminScratchWinnerIndex)) grid[i]=others[o++]; await addDoc(getPublicRef('scratch_activities'), {title: adminScratchTitle, prize: adminScratchPrize, cost: parseInt(adminScratchCost), target: adminScratchTarget, grid, image: img || "https://placehold.co/400x300/e2e8f0/64748b?text=Game", isActive: true, timestamp: serverTimestamp()}); } setAdminScratchTitle(''); setIsAddingReward(false); }};
       const handleEditScratch = (g) => { setEditingScratchId(g.id); setAdminScratchTitle(g.title); setAdminScratchPrize(g.prize); setAdminScratchCost(g.cost); document.querySelector('.admin-scratch-form').scrollIntoView({behavior:'smooth'}); };
       const getRevealedCellsForGame = (gid) => { const s=new Set(); allScratchProgress.filter(p=>p.gameId===gid).forEach(d=>d.revealedIndices?.forEach(i=>s.add(i))); return s; };
+
+      // Implement Missing function: handlePayToScratch
+      const handlePayToScratch = async (game) => {
+        if (points < game.cost) return alert("點數不足");
+        if (!confirm(`確定花費 ${game.cost} P 購買入場券?`)) return;
+
+        try {
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), {
+                totalPoints: increment(-game.cost),
+                totalRedeemed: increment(game.cost)
+            });
+
+            await addDoc(getPublicRef('submissions'), {
+                description: `🎫 購買刮刮樂：${game.title}`,
+                status: 'scratch',
+                awardedPoints: -game.cost,
+                timestamp: serverTimestamp(),
+                userId: user.uid
+            });
+
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', `${game.id}_${user.uid}`), {
+                gameId: game.id,
+                userId: user.uid,
+                revealedIndices: [],
+                won: false,
+                timestamp: serverTimestamp()
+            });
+
+            setCanScratchNow(true);
+            alert("購買成功！請開始刮開銀漆");
+        } catch (e) {
+            console.error(e);
+            alert("交易失敗");
+        }
+      };
+
+      // Implement Missing function: handleRevealed
+      const handleRevealed = async (val, game, idx) => {
+        const progRef = doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', `${game.id}_${user.uid}`);
+        try {
+            await updateDoc(progRef, {
+                revealedIndices: arrayUnion(idx)
+            });
+
+            if (parseInt(val) === parseInt(game.target)) {
+                const progSnap = await getDoc(progRef);
+                if (progSnap.exists() && !progSnap.data().won) {
+                     await updateDoc(progRef, { won: true });
+                     const prize = parseInt(game.prize);
+                     if(prize > 0) {
+                         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), {
+                            totalPoints: increment(prize),
+                            totalIssued: increment(prize)
+                         });
+                         
+                         await addDoc(getPublicRef('submissions'), {
+                            description: `🎉 刮刮樂中獎：${game.title}`,
+                            status: 'bonus',
+                            awardedPoints: prize,
+                            timestamp: serverTimestamp(),
+                            userId: user.uid
+                         });
+                         
+                         alert(`🎉 恭喜中獎！獲得 ${prize} 點！`);
+                     }
+                }
+            }
+        } catch (e) {
+            console.error(e);
+        }
+      };
 
       const myCheckinPhotos = useMemo(() => submissions.filter(s => s.status === 'checkin' && s.userId === user?.uid && s.image).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)), [submissions, user]);
       const allCheckinPhotos = useMemo(() => submissions.filter(s => s.status === 'checkin' && s.image).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)), [submissions]);
@@ -616,12 +723,10 @@
          } catch(e) { alert("領取失敗"); }
       };
 
-      // Filter bank transactions for passbook view
       const bankTransactions = useMemo(() => {
           return submissions.filter(s => s.userId === user?.uid && (s.description.includes('金庫') || s.description.includes('利息'))).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
       }, [submissions, user]);
 
-      // Calculate total weight for wheel probability display
       const wheelTotalWeight = useMemo(() => {
           return gameSettings.wheelSegments.reduce((sum, s) => sum + (s.weight || 0), 0);
       }, [gameSettings.wheelSegments]);
@@ -835,9 +940,9 @@
                                     <div className="flex justify-between items-center">
                                        <span className="text-label">進度: {prog} / {m.target}</span>
                                        {pct >= 100 ? (
-                                            isClaimed ? 
-                                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">已領取</span> : 
-                                            <button onClick={() => handleClaimMission(m)} className="btn-gold px-3 py-1 rounded-full text-[10px] shadow-md">領取獎勵</button>
+                                             isClaimed ? 
+                                             <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">已領取</span> : 
+                                             <button onClick={() => handleClaimMission(m)} className="btn-gold px-3 py-1 rounded-full text-[10px] shadow-md">領取獎勵</button>
                                        ) : <span className="text-[10px] text-slate-400">進行中</span>}
                                     </div>
                                  </div>
@@ -880,7 +985,11 @@
                 <div className="luxury-card p-6 rounded-[30px] space-y-4">
                   <h3 className="font-bold text-deep-blue">夢想許願池</h3>
                   <input className="settings-input text-[11px]" placeholder="想要什麼獎勵..." value={wishName} onChange={e => setWishName(e.target.value)} />
-                  <button onClick={handleMakeWish} className="w-full btn-luxury py-4 rounded-xl font-bold text-xs uppercase tracking-widest">送出夢想</button>
+                  <label className="block mb-2">
+                     <span className="settings-label mb-1">許願圖片 (可選)</span>
+                     <input type="file" accept="image/*" className="text-[10px] text-slate-400 w-full" onChange={e => setWishImage(e.target.files[0])} />
+                  </label>
+                  <button onClick={handleMakeWish} disabled={isWishing} className="w-full btn-luxury py-4 rounded-xl font-bold text-xs uppercase tracking-widest">{isWishing ? '提交中...' : '送出夢想'}</button>
                 </div>
                 
                 {myWishes.length > 0 && (
@@ -982,11 +1091,11 @@
                   <div className="luxury-card p-7 rounded-[35px] space-y-6">
                      <h3 className="font-bold flex items-center gap-3 text-deep-blue text-xs tracking-widest uppercase">遊戲參數與任務設定</h3>
                      <div className="grid grid-cols-2 gap-4">
-                        <div><label className="settings-label">轉盤費用</label><input type="number" className="settings-input" value={pendingSettings?.wheelCost} onChange={e => setPendingSettings({...pendingSettings, wheelCost: parseInt(e.target.value)})} /></div>
-                        <div><label className="settings-label">打卡獎勵</label><input type="number" className="settings-input" value={pendingSettings?.checkInPoints} onChange={e => setPendingSettings({...pendingSettings, checkInPoints: parseInt(e.target.value)})} /></div>
-                        <div><label className="settings-label">金庫日利率</label><input type="number" step="0.01" className="settings-input" value={pendingSettings?.bankRate} onChange={e => setPendingSettings({...pendingSettings, bankRate: parseFloat(e.target.value)})} /></div>
-                        <div><label className="settings-label">金庫閉鎖(時)</label><input type="number" className="settings-input" value={pendingSettings?.bankLockHours} onChange={e => setPendingSettings({...pendingSettings, bankLockHours: parseInt(e.target.value)})} /></div>
-                        <div><label className="settings-label">猜拳倍率</label><input type="number" step="0.1" className="settings-input" value={pendingSettings?.rpsWinMultiplier} onChange={e => setPendingSettings({...pendingSettings, rpsWinMultiplier: parseFloat(e.target.value)})} /></div>
+                       <div><label className="settings-label">轉盤費用</label><input type="number" className="settings-input" value={pendingSettings?.wheelCost} onChange={e => setPendingSettings({...pendingSettings, wheelCost: parseInt(e.target.value)})} /></div>
+                       <div><label className="settings-label">打卡獎勵</label><input type="number" className="settings-input" value={pendingSettings?.checkInPoints} onChange={e => setPendingSettings({...pendingSettings, checkInPoints: parseInt(e.target.value)})} /></div>
+                       <div><label className="settings-label">金庫日利率</label><input type="number" step="0.01" className="settings-input" value={pendingSettings?.bankRate} onChange={e => setPendingSettings({...pendingSettings, bankRate: parseFloat(e.target.value)})} /></div>
+                       <div><label className="settings-label">金庫閉鎖(時)</label><input type="number" className="settings-input" value={pendingSettings?.bankLockHours} onChange={e => setPendingSettings({...pendingSettings, bankLockHours: parseInt(e.target.value)})} /></div>
+                       <div><label className="settings-label">猜拳倍率</label><input type="number" step="0.1" className="settings-input" value={pendingSettings?.rpsWinMultiplier} onChange={e => setPendingSettings({...pendingSettings, rpsWinMultiplier: parseFloat(e.target.value)})} /></div>
                      </div>
                      
                      <div className="border-t border-slate-100 pt-6">
