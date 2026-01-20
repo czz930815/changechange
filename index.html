@@ -260,26 +260,78 @@
 
     const ScratchCell = ({ value, canScratch, onRevealed, isRevealed }) => {
       const canvasRef = useRef(null);
-      const [revealed, setRevealed] = useState(isRevealed);
-      useEffect(() => { setRevealed(isRevealed); }, [isRevealed]);
+      // 使用 ref 來避免重複觸發，且不使用 useState 來避免重新渲染導致畫布重置
+      const hasTriggeredRef = useRef(false);
+
+      // 當後端資料確認已刮開 (isRevealed = true) 時，清除畫布
       useEffect(() => {
         const canvas = canvasRef.current;
-        if(!canvas) return;
+        if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        if (revealed) { ctx.clearRect(0, 0, canvas.width, canvas.height); return; }
-        ctx.fillStyle = '#94a3b8'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('刮', canvas.width/2, canvas.height/2 + 5);
-      }, [revealed]);
-      const handleScratch = (e) => {
-        if(revealed || !canScratch) return;
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-        const ctx = canvasRef.current.getContext('2d');
-        ctx.globalCompositeOperation = 'destination-out'; ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.fill();
-        if(!revealed) { setRevealed(true); onRevealed(value); }
+
+        if (isRevealed) {
+            // 已刮開：清除畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        } else {
+            // 未刮開：重置銀漆層
+            hasTriggeredRef.current = false; // 重置觸發狀態
+            
+            ctx.globalCompositeOperation = 'source-over'; // 恢復正常繪圖模式
+            ctx.fillStyle = '#94a3b8'; // 銀灰色
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 加入一些紋理或文字讓它看起來像刮刮樂
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = 'bold 24px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('?', canvas.width/2, canvas.height/2);
+        }
+      }, [isRevealed]); 
+
+      const scratch = (clientX, clientY) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+
+        const ctx = canvas.getContext('2d');
+        ctx.globalCompositeOperation = 'destination-out'; // 設定為「擦除」模式
+        ctx.beginPath();
+        ctx.arc(x, y, 12, 0, Math.PI * 2); // 筆刷大小
+        ctx.fill();
+
+        // 只要有刮除動作，就觸發後端邏輯 (只觸發一次)
+        if (!hasTriggeredRef.current) {
+            hasTriggeredRef.current = true;
+            onRevealed(value);
+        }
       };
-      return <div className={`scratch-grid-cell ${revealed ? 'revealed' : ''}`}><div className="scratch-content">{value}</div><canvas ref={canvasRef} className="scratch-canvas" width={80} height={80} style={{ pointerEvents: revealed ? 'none' : 'auto' }} onMouseMove={(e) => e.buttons === 1 && handleScratch(e)} onTouchMove={handleScratch} onMouseDown={handleScratch} onTouchStart={handleScratch} /></div>;
+
+      return (
+        <div className="scratch-grid-cell relative">
+            <div className="scratch-content flex items-center justify-center font-bold text-xl text-deep-blue h-full w-full bg-white select-none">
+                {value}
+            </div>
+            <canvas
+                ref={canvasRef}
+                width={80}
+                height={80}
+                className="scratch-canvas absolute top-0 left-0 w-full h-full z-10"
+                style={{ 
+                    touchAction: 'none', // 關鍵：防止手機捲動
+                    opacity: isRevealed ? 0 : 1, // 刮開後淡出
+                    pointerEvents: isRevealed ? 'none' : 'auto',
+                    transition: 'opacity 0.5s ease-out'
+                }}
+                onMouseMove={(e) => !isRevealed && canScratch && e.buttons === 1 && scratch(e.clientX, e.clientY)}
+                onTouchMove={(e) => !isRevealed && canScratch && scratch(e.touches[0].clientX, e.touches[0].clientY)}
+                onMouseDown={(e) => !isRevealed && canScratch && scratch(e.clientX, e.clientY)}
+                onTouchStart={(e) => !isRevealed && canScratch && scratch(e.touches[0].clientX, e.touches[0].clientY)}
+            />
+        </div>
+      );
     };
 
     const compressImage = (file) => {
@@ -644,53 +696,50 @@
       const handleEditScratch = (g) => { setEditingScratchId(g.id); setAdminScratchTitle(g.title); setAdminScratchPrize(g.prize); setAdminScratchCost(g.cost); document.querySelector('.admin-scratch-form').scrollIntoView({behavior:'smooth'}); };
       const getRevealedCellsForGame = (gid) => { const s=new Set(); allScratchProgress.filter(p=>p.gameId===gid).forEach(d=>d.revealedIndices?.forEach(i=>s.add(i))); return s; };
 
-      // Implement Missing function: handlePayToScratch
-      const handlePayToScratch = async (game) => {
-        if (points < game.cost) return alert("點數不足");
-        if (!confirm(`確定花費 ${game.cost} P 購買入場券?`)) return;
+      // Implement Missing function: handleRevealed
+      // 修正邏輯：每一刮都要扣點，並加入特定提示語
+      const handleRevealed = async (val, game, idx) => {
+        // 檢查點數是否足夠
+        if (points < game.cost) {
+            alert(`點數不足！每次刮除需要 ${game.cost} 點`);
+            // 強制重新整理頁面以重置畫布狀態 (因為 canvas 是本地狀態)
+            window.location.reload();
+            return;
+        }
 
+        const progRef = doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', `${game.id}_${user.uid}`);
         try {
+            // 1. 扣除單次點數
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), {
                 totalPoints: increment(-game.cost),
                 totalRedeemed: increment(game.cost)
             });
 
             await addDoc(getPublicRef('submissions'), {
-                description: `🎫 購買刮刮樂：${game.title}`,
+                description: `🎫 刮刮樂耗費 (尋找:${game.target})`,
                 status: 'scratch',
                 awardedPoints: -game.cost,
                 timestamp: serverTimestamp(),
                 userId: user.uid
             });
 
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', `${game.id}_${user.uid}`), {
+            // 2. 更新進度 (如果文檔不存在會自動創建 merge: true)
+            await setDoc(progRef, {
                 gameId: game.id,
                 userId: user.uid,
-                revealedIndices: [],
-                won: false,
-                timestamp: serverTimestamp()
-            });
+                revealedIndices: arrayUnion(idx),
+                timestamp: serverTimestamp(),
+                won: false // 預設
+            }, { merge: true });
 
-            setCanScratchNow(true);
-            alert("購買成功！請開始刮開銀漆");
-        } catch (e) {
-            console.error(e);
-            alert("交易失敗");
-        }
-      };
-
-      // Implement Missing function: handleRevealed
-      const handleRevealed = async (val, game, idx) => {
-        const progRef = doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', `${game.id}_${user.uid}`);
-        try {
-            await updateDoc(progRef, {
-                revealedIndices: arrayUnion(idx)
-            });
-
+            // 3. 判斷輸贏
             if (parseInt(val) === parseInt(game.target)) {
+                // 中獎邏輯
                 const progSnap = await getDoc(progRef);
-                if (progSnap.exists() && !progSnap.data().won) {
-                     await updateDoc(progRef, { won: true });
+                // 確保只領一次獎
+                if (progSnap.exists() && !progSnap.data().wonAt) {
+                     await setDoc(progRef, { won: true, wonAt: serverTimestamp() }, { merge: true });
+                     
                      const prize = parseInt(game.prize);
                      if(prize > 0) {
                          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), {
@@ -706,12 +755,16 @@
                             userId: user.uid
                          });
                          
-                         alert(`🎉 恭喜中獎！獲得 ${prize} 點！`);
+                         alert("恭喜走狗屎運囉!");
                      }
                 }
+            } else {
+                // 沒中獎邏輯
+                alert("加油加油!下一刮就是了!");
             }
         } catch (e) {
             console.error(e);
+            alert("連線不穩，請稍後再試");
         }
       };
 
@@ -982,7 +1035,7 @@
                                    <div className="w-12 h-12 rounded-xl bg-white overflow-hidden shadow-sm border border-slate-100"><img src={game.image} className="w-full h-full object-cover"/></div>
                                    <div className="text-left"><p className="text-sm font-bold text-deep-blue">{game.title}</p><p className="text-[10px] text-label">大獎: {game.prize}</p></div>
                                 </div>
-                                <div className="text-xs font-bold text-slate-600 bg-slate-50 px-3 py-1 rounded-lg z-10 border border-slate-200">{game.cost} P</div>
+                                <div className="text-xs font-bold text-slate-600 bg-slate-50 px-3 py-1 rounded-lg z-10 border border-slate-200">{game.cost} P / 刮</div>
                              </div>
                           ))}
                         </div>
@@ -990,11 +1043,26 @@
                   ) : currentActivity === 'scratch_game' && selectedScratchGame ? (
                       <div className="luxury-card p-6 rounded-[30px] animate-in">
                         <button onClick={() => {setCurrentActivity('scratch_list'); setCanScratchNow(false);}} className="mb-4 text-slate-400 flex items-center text-xs font-bold"><Icon name="ArrowLeft" size={14} className="mr-1"/> 返回</button>
-                        <div className="text-center mb-8"><h2 className="font-bold text-xl mb-1 text-deep-blue">{selectedScratchGame.title}</h2><p className="text-xs text-luxury-gold font-bold">入場費：{selectedScratchGame.cost} P</p></div>
-                        {!canScratchNow ? (
-                          <div className="text-center py-10"><button onClick={() => handlePayToScratch(selectedScratchGame)} className="w-full btn-primary py-4 font-bold shadow-lg">購買入場券</button></div>
-                        ) : (
-                          <div className="grid grid-cols-4 gap-2.5">{selectedScratchGame.grid.map((val, i) => { const isRevealed = currentGameProgress.includes(i); return <ScratchCell key={i} value={val} canScratch={canScratchNow && !isRevealed} isRevealed={isRevealed} onRevealed={(v) => handleRevealed(v, selectedScratchGame, i)} />; })}</div>
+                        <div className="text-center mb-6">
+                            <h2 className="font-bold text-xl mb-1 text-deep-blue">{selectedScratchGame.title}</h2>
+                            <div className="inline-block bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 mb-2">
+                                <p className="text-xs text-slate-500 font-bold mb-1">尋找幸運數字</p>
+                                <p className="text-3xl font-black text-rose-500">{selectedScratchGame.target}</p>
+                            </div>
+                            <p className="text-xs text-slate-400 font-bold mt-2">每刮一格扣除 <span className="text-deep-blue">{selectedScratchGame.cost} P</span></p>
+                        </div>
+                        
+                        {/* 移除購買按鈕，直接顯示格子，透過 points 判斷是否可玩 */}
+                        <div className="grid grid-cols-4 gap-2.5">
+                            {selectedScratchGame.grid.map((val, i) => { 
+                                const isRevealed = currentGameProgress.includes(i); 
+                                // 只有沒刮開且點數足夠時才能刮
+                                return <ScratchCell key={i} value={val} canScratch={!isRevealed && points >= selectedScratchGame.cost} isRevealed={isRevealed} onRevealed={(v) => handleRevealed(v, selectedScratchGame, i)} />; 
+                            })}
+                        </div>
+                        
+                        {points < selectedScratchGame.cost && (
+                            <p className="text-center text-xs text-rose-500 font-bold mt-4">點數不足，無法繼續刮除</p>
                         )}
                       </div>
                   ) : null}
