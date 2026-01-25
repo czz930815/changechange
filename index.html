@@ -229,9 +229,9 @@
       const auth = getAuth(app);
       const db = getFirestore(app);
       
-      // 關鍵修正：再次強制設定 appId 為 "point-store-v1"，這是您電腦能看到資料的版本
-      // 強制所有裝置都連線到這個 ID，解決手機不同步問題
-      const fixedAppId = "point-store-v1";
+      // 關鍵修正：將 ID 永久改回 "love-sync-v1"
+      // 這是您最原始資料存放的地方 (即 v1.4 電腦版能看到的那個資料庫)
+      const fixedAppId = "love-sync-v1";
       
       window.fb = { db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc, arrayUnion, getDoc, appId: fixedAppId, isReady: true, onAuthStateChanged, signInAnonymously, signInWithCustomToken };
       
@@ -1473,7 +1473,7 @@
                   {/* 系統版本資訊 (放在後台最底部) */}
                   <div className="text-center text-[9px] text-slate-300 mt-8 mb-4">
                       <p>系統 ID: {appId}</p>
-                      <p>版本: 1.5 (Mobile Fix)</p>
+                      <p>版本: 1.6 (Final Restore)</p>
                   </div>
                </div>
             )}
