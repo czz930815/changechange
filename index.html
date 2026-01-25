@@ -229,11 +229,12 @@
       const auth = getAuth(app);
       const db = getFirestore(app);
       
-      // 關鍵修正：強制設定 appId 為 "point-store-v1"
-      // 這樣可以確保所有裝置（手機/電腦）都強制連線到同一個資料庫路徑，避免因為環境變數不同而找不到資料
-      const fixedAppId = "point-store-v1";
+      // 關鍵修正：將 ID 改回 "love-sync-v1"，這是您原始資料存放的地方
+      // 移除之前的強制覆寫，改回讀取您的舊資料
+      const originAppId = "love-sync-v1";
+      const appId = typeof __app_id !== 'undefined' ? __app_id : originAppId;
       
-      window.fb = { db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc, arrayUnion, getDoc, appId: fixedAppId, isReady: true, onAuthStateChanged, signInAnonymously, signInWithCustomToken };
+      window.fb = { db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc, arrayUnion, getDoc, appId: appId, isReady: true, onAuthStateChanged, signInAnonymously, signInWithCustomToken };
       
       (async () => {
         try {
@@ -1472,7 +1473,7 @@
                   {/* 系統版本資訊 (放在後台最底部) */}
                   <div className="text-center text-[9px] text-slate-300 mt-8 mb-4">
                       <p>系統 ID: {appId}</p>
-                      <p>版本: 1.3 (強制同步版)</p>
+                      <p>版本: 1.4 (資料救援版)</p>
                   </div>
                </div>
             )}
