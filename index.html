@@ -229,7 +229,8 @@
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
       const db = getFirestore(app);
-      window.fb = { db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc, arrayUnion, getDoc, appId: typeof __app_id !== 'undefined' ? __app_id : "point-store-v1", isReady: true, onAuthStateChanged, signInAnonymously, signInWithCustomToken };
+      // 關鍵修正：將預設 appId 改回 "love-sync-v1" 以找回舊資料
+      window.fb = { db, auth, doc, setDoc, updateDoc, collection, onSnapshot, addDoc, increment, serverTimestamp, deleteDoc, arrayUnion, getDoc, appId: typeof __app_id !== 'undefined' ? __app_id : "love-sync-v1", isReady: true, onAuthStateChanged, signInAnonymously, signInWithCustomToken };
       
       (async () => {
         try {
