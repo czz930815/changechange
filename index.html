@@ -91,6 +91,7 @@
         Check: <polyline points="20 6 9 17 4 12"/>,
         Chart: (<Fragment><path d="M12 20V10M18 20V4M6 20v-4"/></Fragment>),
         Sparkles: (<Fragment><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1-1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></Fragment>),
+        Coins: (<Fragment><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18.06"/><path d="M7 6h2v4"/><path d="M17 12h2v4"/></Fragment>),
       };
       return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className={className}>{icons[name] || null}</svg>;
     };
@@ -163,7 +164,7 @@
       const [announcement, setAnnouncement] = useState('歡迎光臨 Point 應有盡有大超商');
 
       const [gameSettings, setGameSettings] = useState({ wheelCost: 20, wheelSegments: [], bankRate: 0.05, bankLockHours: 24, checkInPoints: 2 });
-      const [savings, setSavings] = useState({ balance: 0 });
+      const [savings, setSavings] = useState({ balance: 0, lastInterestTime: null });
       const [wheelSpinning, setWheelSpinning] = useState(false);
       const [wheelRotation, setWheelRotation] = useState(0);
       
@@ -262,7 +263,38 @@
         }
       };
 
+      const handleCollectInterest = async () => {
+        const lastTime = savings.lastInterestTime ? savings.lastInterestTime.seconds * 1000 : 0;
+        if(Date.now() - lastTime < 86400000) return alert("每日只能領取一次利息");
+        const interest = Math.floor((savings.balance || 0) * (gameSettings.bankRate || 0.05));
+        if(interest <= 0) return alert("本金過低無利息");
+        
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'savings', 'account'), { 
+            balance: increment(interest), 
+            lastInterestTime: serverTimestamp() 
+        }, { merge: true });
+        
+        await addDoc(getPublicRef('submissions'), { 
+            description: "💰 金庫利息", 
+            status: 'bonus', 
+            awardedPoints: interest, 
+            timestamp: serverTimestamp(), 
+            userId: user.uid 
+        });
+        
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { 
+            totalPoints: increment(interest), 
+            totalIssued: increment(interest) 
+        });
+        
+        alert(`領取利息：${interest} 點`);
+      };
+
       const myTickets = useMemo(() => submissions.filter(s => s.status === 'redeemed' || s.status === 'verified').sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0)), [submissions]);
+
+      const bankTransactions = useMemo(() => {
+          return submissions.filter(s => (s.description.includes('金庫') || s.description.includes('利息'))).sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+      }, [submissions]);
 
       if (loading) return null;
 
@@ -344,9 +376,13 @@
                   ) : currentActivity === 'bank' ? (
                     <div className="luxury-card p-8 animate-in space-y-6">
                        <button onClick={() => setCurrentActivity(null)} className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">← 返回選單</button>
-                       <div className="luxury-gold-bg p-8 rounded-2xl text-center">
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-white/80 mb-2">金庫總額</p>
+                       <div className="luxury-gold-bg p-8 rounded-2xl text-center shadow-xl">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-white/80 mb-2">小金庫餘額</p>
                           <p className="text-4xl font-bold">{savings.balance || 0}</p>
+                          <div className="flex justify-center gap-3 mt-4">
+                             <span className="bg-white/20 text-[9px] px-2 py-1 rounded-full font-bold">利率: {Math.round(gameSettings.bankRate*100)}%</span>
+                             <span className="bg-white/20 text-[9px] px-2 py-1 rounded-full font-bold">複利: 每日</span>
+                          </div>
                        </div>
                        <div className="grid grid-cols-2 gap-4">
                           <button onClick={async () => {
@@ -355,14 +391,39 @@
                              await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'savings', 'account'), { balance: increment(amt) }, { merge: true });
                              await addDoc(getPublicRef('submissions'), { description: "🏦 存入金庫", status: 'deducted', awardedPoints: -amt, timestamp: serverTimestamp(), userId: user.uid });
                              alert("存入成功");
-                          }} className="btn-primary py-3">存入</button>
+                          }} className="btn-primary py-4 flex flex-col items-center gap-1"><Icon name="Coins" size={18}/><span>存入</span></button>
                           <button onClick={async () => {
                              const amt = parseInt(prompt("提領金額:")); if(!amt || (savings.balance||0) < amt) return;
                              await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(amt), totalIssued: increment(amt) });
                              await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'savings', 'account'), { balance: increment(-amt) }, { merge: true });
                              await addDoc(getPublicRef('submissions'), { description: "🏦 金庫提款", status: 'bonus', awardedPoints: amt, timestamp: serverTimestamp(), userId: user.uid });
                              alert("提領成功");
-                          }} className="bg-slate-100 text-slate-700 py-3 rounded-xl font-bold">提領</button>
+                          }} className="bg-slate-100 text-slate-700 py-4 rounded-xl font-bold flex flex-col items-center gap-1 border border-slate-200"><Icon name="ArrowLeft" size={18} className="rotate-90"/><span>提領</span></button>
+                       </div>
+                       
+                       <button onClick={handleCollectInterest} className="w-full py-5 border-2 border-amber-400 text-amber-700 rounded-2xl font-bold text-xs uppercase hover:bg-amber-50 shadow-md transition-colors flex items-center justify-center gap-2">
+                          <Icon name="Sparkles" size={16}/> 領取每日利息
+                       </button>
+                       
+                       <div className="border-t border-slate-100 pt-6">
+                          <p className="text-label mb-4 px-2">交易明細</p>
+                          <div className="space-y-3 max-h-48 overflow-y-auto no-scrollbar">
+                             {bankTransactions.length === 0 ? (
+                                <p className="text-center text-[10px] text-slate-300 py-4">目前尚無利息或交易紀錄</p>
+                             ) : (
+                                bankTransactions.map(t => (
+                                   <div key={t.id} className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                      <div className="flex flex-col">
+                                         <span className="text-[9px] text-slate-400 font-bold">{t.timestamp ? new Date(t.timestamp.seconds * 1000).toLocaleDateString() : ''}</span>
+                                         <span className="text-xs font-bold text-deep-blue">{t.description}</span>
+                                      </div>
+                                      <span className={`text-xs font-bold ${t.awardedPoints > 0 ? 'text-emerald-600' : 'text-rose-400'}`}>
+                                         {t.awardedPoints > 0 ? `+${t.awardedPoints}` : t.awardedPoints}
+                                      </span>
+                                   </div>
+                                ))
+                             )}
+                          </div>
                        </div>
                     </div>
                   ) : currentActivity === 'scratch_list' ? (
