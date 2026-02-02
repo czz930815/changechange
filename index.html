@@ -205,7 +205,24 @@
 
       useEffect(() => {
         if (!user) return;
-        const unsubStats = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), (d) => { if (d.exists()) { setPoints(d.data().totalPoints || 0); setStats({ totalIssued: d.data().totalIssued || 0, totalRedeemed: d.data().totalRedeemed || 0 }); } });
+        
+        // Revised Stats Listener with safe number parsing
+        const unsubStats = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), (d) => { 
+            if (d.exists()) { 
+                const data = d.data();
+                // Ensure it is a number and not NaN
+                const safePoints = Number(data.totalPoints);
+                setPoints(isNaN(safePoints) ? 0 : safePoints); 
+                setStats({ 
+                    totalIssued: Number(data.totalIssued) || 0, 
+                    totalRedeemed: Number(data.totalRedeemed) || 0 
+                }); 
+            } else {
+                // If doc missing, set to 0
+                setPoints(0);
+            }
+        });
+
         const unsubSub = onSnapshot(getPublicRef('submissions'), (s) => setSubmissions(s.docs.map(d => ({id: d.id, ...d.data()}))));
         const unsubReward = onSnapshot(getPublicRef('rewards'), (s) => setRewards(s.docs.map(d => ({id: d.id, ...d.data()}))));
         const unsubSetting = onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'games'), (d) => { if(d.exists()) { setGameSettings(d.data()); setPendingSettings(prev => prev ? prev : d.data()); } });
@@ -238,7 +255,7 @@
         const cost = gameSettings.wheelCost || 20;
         if(points < cost || wheelSpinning) return;
         setWheelSpinning(true);
-        // FIX: Use setDoc to ensure document exists
+        // Using setDoc to guarantee structure exists
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-cost), totalRedeemed: increment(cost) }, { merge: true });
         
         const segments = gameSettings.wheelSegments;
@@ -261,7 +278,6 @@
            alert(`結果：${win.label}`);
            if(win.value > 0) {
               await addDoc(getPublicRef('submissions'), { description: `🎡 轉盤獎勵：${win.label}`, status: 'bonus', awardedPoints: win.value, timestamp: serverTimestamp(), userId: user.uid });
-              // FIX: Use setDoc
               await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(win.value), totalIssued: increment(win.value) }, { merge: true });
            }
         }, 3000);
@@ -270,12 +286,10 @@
       const handleRevealed = async (val, game, idx) => {
         if (points < game.cost) return alert("點數不足");
         const progRef = doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', `${game.id}_global`);
-        // FIX: Use setDoc
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-game.cost), totalRedeemed: increment(game.cost) }, { merge: true });
         await setDoc(progRef, { gameId: game.id, revealedIndices: arrayUnion(idx), timestamp: serverTimestamp() }, { merge: true });
         if (parseInt(val) === parseInt(game.target)) {
             const prize = parseInt(game.prize);
-            // FIX: Use setDoc
             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(prize), totalIssued: increment(prize) }, { merge: true });
             alert("恭喜中獎！");
         }
@@ -284,7 +298,6 @@
       const handleRedeem = async (r) => {
         if(points < r.cost) return alert("點數不足");
         if(confirm(`兌換 ${r.name}?`)) {
-          // FIX: Use setDoc
           await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-r.cost), totalRedeemed: increment(r.cost) }, { merge: true });
           await addDoc(getPublicRef('submissions'), { description: `🎁 已兌換：${r.name}`, image: r.image, status: 'redeemed', awardedPoints: -r.cost, timestamp: serverTimestamp(), userId: user.uid });
           alert("兌換成功，請至票券夾查看");
@@ -298,7 +311,6 @@
         if(interest <= 0) return alert("本金過低無利息");
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'savings', 'account'), { balance: increment(interest), lastInterestTime: serverTimestamp() }, { merge: true });
         await addDoc(getPublicRef('submissions'), { description: "💰 金庫利息", status: 'bonus', awardedPoints: interest, timestamp: serverTimestamp(), userId: user.uid });
-        // FIX: Use setDoc
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(interest), totalIssued: increment(interest) }, { merge: true });
         alert(`領取利息：${interest} 點`);
       };
@@ -321,27 +333,51 @@
         alert("商品已上架");
       };
 
+      // --- CRITICAL FIX: Safe Point Management to handle corrupted/missing/NaN data ---
       const handleManagePoints = async (isDeduct) => { 
         if(!givePointsAmount) return alert("請輸入點數");
         const amount = parseInt(givePointsAmount);
         if(isNaN(amount) || amount <= 0) return alert("請輸入有效的數字");
+        
         const reason = givePointsReason || (isDeduct ? "系統扣除" : "系統補給");
         const finalAmount = isDeduct ? -amount : amount;
         
-        await addDoc(getPublicRef('submissions'), { description: `${isDeduct ? '💸' : '🎁'} ${reason}`, status: isDeduct ? 'deducted' : 'bonus', awardedPoints: finalAmount, timestamp: serverTimestamp(), userId: user.uid });
+        await addDoc(getPublicRef('submissions'), { 
+            description: `${isDeduct ? '💸' : '🎁'} ${reason}`, 
+            status: isDeduct ? 'deducted' : 'bonus', 
+            awardedPoints: finalAmount, 
+            timestamp: serverTimestamp(), 
+            userId: user.uid 
+        });
         
-        // FIX: Use setDoc with merge: true to automatically create the document if it doesn't exist
-        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { 
-            totalPoints: increment(finalAmount), 
-            [isDeduct?'totalRedeemed':'totalIssued']: increment(amount) 
-        }, { merge: true });
-        
-        setGivePointsAmount(''); setGivePointsReason(''); alert("操作成功"); 
+        // Safe Update Logic: Read -> Clean -> Write
+        const statsRef = doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total');
+        try {
+            const snap = await getDoc(statsRef);
+            let current = 0;
+            if(snap.exists()) {
+                current = Number(snap.data().totalPoints);
+                if(isNaN(current)) current = 0; // Fix corruption
+            }
+            
+            const newTotal = current + finalAmount;
+            
+            await setDoc(statsRef, { 
+                totalPoints: newTotal, 
+                [isDeduct?'totalRedeemed':'totalIssued']: increment(amount) 
+            }, { merge: true });
+            
+            setGivePointsAmount(''); setGivePointsReason(''); 
+            alert("操作成功，點數已更新"); 
+        } catch (err) {
+            console.error(err);
+            alert("更新失敗，請重試");
+        }
       };
 
       const handleApprove = async (sub, pts) => { 
           await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', sub.id), { status: 'approved', awardedPoints: parseInt(pts) }); 
-          // FIX: Use setDoc
+          // Safe write
           await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(pts), totalIssued: increment(pts) }, { merge: true }); 
           alert("已批准"); 
       };
