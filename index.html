@@ -238,7 +238,8 @@
         const cost = gameSettings.wheelCost || 20;
         if(points < cost || wheelSpinning) return;
         setWheelSpinning(true);
-        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-cost), totalRedeemed: increment(cost) });
+        // FIX: Use setDoc to ensure document exists
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-cost), totalRedeemed: increment(cost) }, { merge: true });
         
         const segments = gameSettings.wheelSegments;
         const totalWeight = segments.reduce((sum, s) => sum + (s.weight || 0), 0);
@@ -260,7 +261,8 @@
            alert(`結果：${win.label}`);
            if(win.value > 0) {
               await addDoc(getPublicRef('submissions'), { description: `🎡 轉盤獎勵：${win.label}`, status: 'bonus', awardedPoints: win.value, timestamp: serverTimestamp(), userId: user.uid });
-              await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(win.value), totalIssued: increment(win.value) });
+              // FIX: Use setDoc
+              await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(win.value), totalIssued: increment(win.value) }, { merge: true });
            }
         }, 3000);
       };
@@ -268,11 +270,13 @@
       const handleRevealed = async (val, game, idx) => {
         if (points < game.cost) return alert("點數不足");
         const progRef = doc(db, 'artifacts', appId, 'public', 'data', 'scratch_progress', `${game.id}_global`);
-        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-game.cost), totalRedeemed: increment(game.cost) });
+        // FIX: Use setDoc
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-game.cost), totalRedeemed: increment(game.cost) }, { merge: true });
         await setDoc(progRef, { gameId: game.id, revealedIndices: arrayUnion(idx), timestamp: serverTimestamp() }, { merge: true });
         if (parseInt(val) === parseInt(game.target)) {
             const prize = parseInt(game.prize);
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(prize), totalIssued: increment(prize) });
+            // FIX: Use setDoc
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(prize), totalIssued: increment(prize) }, { merge: true });
             alert("恭喜中獎！");
         }
       };
@@ -280,7 +284,8 @@
       const handleRedeem = async (r) => {
         if(points < r.cost) return alert("點數不足");
         if(confirm(`兌換 ${r.name}?`)) {
-          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-r.cost), totalRedeemed: increment(r.cost) });
+          // FIX: Use setDoc
+          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-r.cost), totalRedeemed: increment(r.cost) }, { merge: true });
           await addDoc(getPublicRef('submissions'), { description: `🎁 已兌換：${r.name}`, image: r.image, status: 'redeemed', awardedPoints: -r.cost, timestamp: serverTimestamp(), userId: user.uid });
           alert("兌換成功，請至票券夾查看");
         }
@@ -293,7 +298,8 @@
         if(interest <= 0) return alert("本金過低無利息");
         await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'savings', 'account'), { balance: increment(interest), lastInterestTime: serverTimestamp() }, { merge: true });
         await addDoc(getPublicRef('submissions'), { description: "💰 金庫利息", status: 'bonus', awardedPoints: interest, timestamp: serverTimestamp(), userId: user.uid });
-        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(interest), totalIssued: increment(interest) });
+        // FIX: Use setDoc
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(interest), totalIssued: increment(interest) }, { merge: true });
         alert(`領取利息：${interest} 點`);
       };
 
@@ -318,18 +324,31 @@
       const handleManagePoints = async (isDeduct) => { 
         if(!givePointsAmount) return alert("請輸入點數");
         const amount = parseInt(givePointsAmount);
+        if(isNaN(amount) || amount <= 0) return alert("請輸入有效的數字");
         const reason = givePointsReason || (isDeduct ? "系統扣除" : "系統補給");
         const finalAmount = isDeduct ? -amount : amount;
+        
         await addDoc(getPublicRef('submissions'), { description: `${isDeduct ? '💸' : '🎁'} ${reason}`, status: isDeduct ? 'deducted' : 'bonus', awardedPoints: finalAmount, timestamp: serverTimestamp(), userId: user.uid });
-        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(finalAmount), [isDeduct?'totalRedeemed':'totalIssued']: increment(amount) });
+        
+        // FIX: Use setDoc with merge: true to automatically create the document if it doesn't exist
+        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { 
+            totalPoints: increment(finalAmount), 
+            [isDeduct?'totalRedeemed':'totalIssued']: increment(amount) 
+        }, { merge: true });
+        
         setGivePointsAmount(''); setGivePointsReason(''); alert("操作成功"); 
       };
 
-      const handleApprove = async (sub, pts) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', sub.id), { status: 'approved', awardedPoints: parseInt(pts) }); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(pts), totalIssued: increment(pts) }); alert("已批准"); };
+      const handleApprove = async (sub, pts) => { 
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', sub.id), { status: 'approved', awardedPoints: parseInt(pts) }); 
+          // FIX: Use setDoc
+          await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(pts), totalIssued: increment(pts) }, { merge: true }); 
+          alert("已批准"); 
+      };
       const handleReject = async (sub) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'submissions', sub.id), { status: 'rejected', awardedPoints: 0 }); alert("已駁回"); };
       const handleSaveGameSettings = async () => { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'games'), pendingSettings, { merge: true }); alert("設定已更新"); };
       const updateAnnounce = async () => { const t = prompt("新公告:", announcement); if(t) await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'announce'), {text: t}); };
-      const deleteItem = async (col, id, name) => { if(confirm("確定刪除?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', col, id)); };
+      const deleteItem = async (col, id, name) => { if(confirm(`確定刪除 ${name}?`)) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', col, id)); };
       const handleUploadTaskByAdmin = async () => {
         if (!adminRewardName || !adminRewardCost) return; setIsAddingReward(true);
         const img = adminRewardImage ? await compressImage(adminRewardImage) : "https://placehold.co/400x300/e2e8f0/64748b?text=Gift";
@@ -433,14 +452,16 @@
                        <div className="grid grid-cols-2 gap-4">
                           <button onClick={async () => {
                              const amt = parseInt(prompt("存入金額:")); if(!amt || points < amt) return;
-                             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-amt), totalRedeemed: increment(amt) });
+                             // FIX: Use setDoc
+                             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(-amt), totalRedeemed: increment(amt) }, { merge: true });
                              await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'savings', 'account'), { balance: increment(amt) }, { merge: true });
                              await addDoc(getPublicRef('submissions'), { description: "🏦 存入金庫", status: 'deducted', awardedPoints: -amt, timestamp: serverTimestamp(), userId: user.uid });
                              alert("存入成功");
                           }} className="btn-primary py-4 flex flex-col items-center gap-1"><Icon name="Coins" size={18}/><span>存入</span></button>
                           <button onClick={async () => {
                              const amt = parseInt(prompt("提領金額:")); if(!amt || (savings.balance||0) < amt) return;
-                             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(amt), totalIssued: increment(amt) });
+                             // FIX: Use setDoc
+                             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'stats', 'total'), { totalPoints: increment(amt), totalIssued: increment(amt) }, { merge: true });
                              await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'savings', 'account'), { balance: increment(-amt) }, { merge: true });
                              await addDoc(getPublicRef('submissions'), { description: "🏦 金庫提款", status: 'bonus', awardedPoints: amt, timestamp: serverTimestamp(), userId: user.uid });
                              alert("提領成功");
